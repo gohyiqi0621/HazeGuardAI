@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>HazeGuard AI — responsive verification harness</title>
+<style>
+  body { font: 14px/1.5 system-ui, sans-serif; margin: 24px; background: #0d1512; color: #e6f2ec; }
+  h1 { font-size: 18px; }
+  #summary { padding: 10px 14px; border-radius: 8px; font-weight: 700; margin-bottom: 16px; }
+  #summary.pass { background: #10381f; color: #6ee7a8; }
+  #summary.fail { background: #3d1414; color: #fca5a5; }
+  table { border-collapse: collapse; width: 100%; }
+  th, td { border: 1px solid #2a3a33; padding: 6px 9px; text-align: left; font-size: 13px; vertical-align: top; }
+  th { background: #16221d; }
+  .ok { color: #6ee7a8; font-weight: 700; }
+  .bad { color: #fca5a5; font-weight: 700; }
+  .frame-wrap { margin-top: 24px; border: 1px dashed #2a3a33; position: relative; overflow: hidden; }
+  .frame-wrap b { position: absolute; top: 4px; left: 6px; z-index: 2; background: #000a; padding: 2px 8px; border-radius: 6px; font-size: 12px; }
+  iframe { border: 0; display: block; }
+  #stage { overflow-x: auto; }
+</style>
+</head>
+<body>
+<h1>HazeGuard AI — responsive verification (360 / 390 / 768 / 1024 / 1440)</h1>
+<div id="summary">Running checks…</div>
+<table id="results"><thead><tr>
+  <th>Width</th><th>Horizontal overflow</th><th>Elements off right edge</th><th>Nav (5-item bar / sidebar)</th><th>Chat input above nav</th><th>Touch targets ≥44px</th><th>Details</th>
+</tr></thead><tbody></tbody></table>
+<div id="stage"></div>
+
+<script>
+const WIDTHS = [360, 390, 768, 1024, 1440];
+const SCREENS = ['landing','login','register','otp','verify-result','forgot','reset','dashboard','radar','planner','chat','history','profile'];
+const results = [];
+
+function check() {
+  return new Promise((resolve) => {
+    const stage = document.getElementById('stage');
+    stage.innerHTML = '';
+    let wi = 0;
+
+    async function nextWidth() {
+      if (wi >= WIDTHS.length) { renderResults(); return; }
+      const w = WIDTHS[wi++];
+      const wrap = document.createElement('div');
+      wrap.className = 'frame-wrap';
+      wrap.innerHTML = '<b>' + w + 'px</b>';
+      const f = document.createElement('iframe');
+      f.width = w; f.height = 820;
+      f.src = '/';
+      wrap.appendChild(f);
+      stage.appendChild(wrap);
+
+      f.addEventListener('load', async () => {
+        const doc = f.contentDocument;
+        const win = f.contentWindow;
+        try { await doc.fonts.ready; } catch (e) {}
+        const r = { w, overflow: [], offscreen: [], nav: '', chat: '', targets: '', details: [] };
+
+        for (const s of SCREENS) {
+          win.render(s);
+          await new Promise((res) => requestAnimationFrame(() => requestAnimationFrame(res)));
+          const de = doc.documentElement;
+          if (de.scrollWidth > w + 1) r.overflow.push(s + ' (' + de.scrollWidth + 'px)');
+
+          // visible elements poking past the right edge
+          const offenders = [...doc.querySelectorAll('body *')].filter((el) => {
+            const cs = win.getComputedStyle(el);
+            if (cs.display === 'none' || cs.visibility === 'hidden' || el.closest('[hidden]')) return false;
+            const rect = el.getBoundingClientRect();
+            if (rect.width === 0 || rect.height === 0) return false;
+            if (el.matches('.frame-wrap, iframe')) return false;
+            return rect.right > w + 1.5;
+          });
+          if (offenders.length) r.offscreen.push(s + ': ' + offenders.slice(0, 4).map((el) => el.tagName.toLowerCase() + '.' + (el.className || '').toString().split(' ')[0]).join(', '));
+        }
+
+        // navigation rules per width
+        win.render('dashboard');
+        await new Promise((res) => requestAnimationFrame(res));
+        const tabbar = doc.querySelector('.tabbar');
+        const sidenav = doc.querySelector('.sidenav');
+        const tabVisible = tabbar && win.getComputedStyle(tabbar).display !== 'none';
+        const sideVisible = sidenav && win.getComputedStyle(sidenav).display !== 'none';
+        const itemCount = tabbar ? tabbar.querySelectorAll('.tabbar__item').length : 0;
+        const labels = tabbar ? [...tabbar.querySelectorAll('.tabbar__item span')].map((s) => s.textContent).join('/') : '';
+
+        if (w < 1024) {
+          r.nav = tabVisible && itemCount === 5 && !sideVisible ? 'PASS (5 items: ' + labels + ')' : 'FAIL (tabbar:' + tabVisible + ' items:' + itemCount + ' sidebar:' + sideVisible + ')';
+        } else {
+          r.nav = !tabVisible && sideVisible ? 'PASS (sidebar replaces bar)' : 'FAIL (tabbar:' + tabVisible + ' sidebar:' + sideVisible + ')';
+        }
+
+        // chat input must sit above the bottom bar (or viewport on desktop)
+        win.render('chat');
+        await new Promise((res) => requestAnimationFrame(res));
+        const compose = doc.querySelector('.chat-compose').getBoundingClientRect();
+        if (w < 1024) {
+          const tb = tabbar.getBoundingClientRect();
+          r.chat = compose.bottom <= tb.top + 1.5 ? 'PASS' : 'FAIL (compose bottom ' + compose.bottom.toFixed(0) + ' vs bar top ' + tb.top.toFixed(0) + ')';
+        } else {
+          r.chat = compose.bottom <= 820 + 1.5 ? 'PASS' : 'FAIL';
+        }
+
+        // touch targets in nav
+        win.render('dashboard');
+        const small = w < 1024
+          ? [...doc.querySelectorAll('.tabbar__item')].filter((el) => el.getBoundingClientRect().height < 44)
+          : [...doc.querySelectorAll('.sidenav__item')].filter((el) => el.getBoundingClientRect().height < 40);
+        r.targets = small.length === 0 ? 'PASS' : 'FAIL (' + small.length + ' undersized)';
+
+        results.push(r);
+        nextWidth();
+      });
+    }
+    nextWidth();
+  });
+}
+
+function renderResults() {
+  const tbody = document.querySelector('#results tbody');
+  tbody.innerHTML = results.map((r) => {
+    const cell = (pass, text) => '<td class="' + (pass ? 'ok">PASS' : 'bad">FAIL') + (text ? ' — ' + text : '') + '</td>';
+    const overflowOk = r.overflow.length === 0;
+    const offOk = r.offscreen.length === 0;
+    return '<tr><td>' + r.w + '</td>' +
+      cell(overflowOk, r.overflow.join(', ')) +
+      cell(offOk, r.offscreen.join(' | ')) +
+      cell(r.nav.startsWith('PASS'), r.nav.replace('PASS', '').replace('FAIL', '').replace(/^ \(/, '').replace(/\)$/, '')) +
+      cell(r.chat === 'PASS', r.chat === 'PASS' ? '' : r.chat) +
+      cell(r.targets === 'PASS', r.targets === 'PASS' ? '' : r.targets) +
+      '<td>' + (r.details.join('; ') || '—') + '</td></tr>';
+  }).join('');
+
+  const failed = results.some((r) => r.overflow.length || r.offscreen.length || !r.nav.startsWith('PASS') || r.chat !== 'PASS' || r.targets !== 'PASS');
+  const summary = document.getElementById('summary');
+  summary.textContent = failed ? 'RESULT: FAIL — see table' : 'RESULT: ALL CHECKS PASS (' + results.length + ' widths × ' + SCREENS.length + ' screens)';
+  summary.className = failed ? 'fail' : 'pass';
+}
+
+check();
+</script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+# ---- secrets / local state (never commit) ----
+.env
+.env.local
+storage/
+*.log
+
+# ---- PHP ----
+/vendor/
+composer.lock
+.phpunit.result.cache
+
+# ---- Node (test tooling only) ----
+node_modules/
+npm-debug.log*
+
+# ---- editors / OS ----
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+desktop.ini

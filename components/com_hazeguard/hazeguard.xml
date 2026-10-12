@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+	HazeGuard AI component manifest.
+
+	This project mirrors Joomla's component layout in plain PHP, so this file is
+	documentation rather than something the Joomla installer consumes. It is kept
+	Joomla-shaped so the folder conventions stay recognisable.
+
+	In a real Joomla component this file would live in the package root and the
+	<files>/<media> elements would drive installation.
+-->
+<extension type="component" method="upgrade">
+	<name>com_hazeguard</name>
+	<author>HazeGuard AI</author>
+	<creationDate>2026-10-11</creationDate>
+	<version>1.0.0</version>
+	<description>HazeGuard AI — authentication API (site) and read-only dashboard (administrator).</description>
+
+	<!-- Namespace prefix the component's classes live under. -->
+	<namespace>HazeGuard\Component\Hazeguard</namespace>
+
+	<files>
+		<folder>Controller</folder>
+		<folder>Model</folder>
+		<folder>View</folder>
+	</files>
+
+	<media destination="com_hazeguard">
+		<folder>css</folder>
+		<folder>js</folder>
+		<folder>assets</folder>
+	</media>
+</extension>

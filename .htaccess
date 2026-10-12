@@ -1,0 +1,35 @@
+# ---------------------------------------------------------------------------
+# HazeGuard AI — Apache rules.
+#
+# Joomla ships the same idea as `htaccess.txt`. The project root is the document
+# root, so this file does two jobs:
+#
+#   1. keep secrets, data and tooling off the web
+#   2. send /api/* and the app shell to the front controller (index.php)
+#
+# PHP files execute rather than being served as source, but plain-text files
+# (.env, *.sql, *.md, storage/mail/*.txt) would be downloaded verbatim — hence
+# the rules below.
+# ---------------------------------------------------------------------------
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # 1. Never serve source, data or tooling over HTTP.
+    RewriteRule ^(libraries|components|database|tests|storage|templates)(/|$) - [F]
+    RewriteRule ^administrator/components(/|$) - [F]
+    RewriteRule ^bootstrap\.php$ - [F]
+    RewriteRule \.(env|md|sql|xml|json|lock|log|txt)$ - [F]
+
+    # 2. Front controller: anything that is not a real file goes to index.php.
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+# Hidden files (.env, .gitignore, .git) are never served.
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
+
+# No directory listings.
+Options -Indexes
