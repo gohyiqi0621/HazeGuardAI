@@ -351,6 +351,53 @@ check('the radar list is a combobox popup, like the profile one',
 check('the radar no longer shows a Demo badge on real readings',
   /id="location-badge"/.test(html) && !/id="location-badge"[^>]*badge--demo/.test(html));
 
+// 26. mobile. The owner reported three symptoms on a phone: cramped, the page
+//     zooming in when a field is focused, and sideways scroll. Each maps to one
+//     rule below, and each is cheap to undo by accident.
+check('fields are never under 16px, or iOS zooms the page and never zooms back',
+  // The specific regression: `font: inherit` over a 0.95rem body computed 15.2px.
+  /--fs-input:\s*1rem/.test(css)
+  && /\.input\s*\{[^}]*font:\s*inherit;[^}]*font-size:\s*var\(--fs-input\)/.test(css));
+check('the layout is mobile-first, not desktop-first',
+  // Only one max-width query, and it is the narrow end. A design that starts at
+  // desktop loads every desktop rule on a phone.
+  (css.match(/@media \(min-width:/g) || []).length >= 4
+  && (css.match(/@media \(max-width:/g) || []).length <= 2
+  && !/@media \(max-width:\s*10(2[4-9]|[3-9]\d)px\)/.test(css));
+check('flex text children may shrink, or a long row scrolls the page sideways',
+  // The trap: a flex item defaults to min-width:auto and refuses to shrink below
+  // its content. An <input> carries an intrinsic width from its default size=20,
+  // so the search row could not compress and pushed the page wide instead.
+  /\.search__input\s*\{[^}]*min-width:\s*0/.test(css)
+  && /\.chat-compose__input\s*\{[^}]*min-width:\s*0/.test(css)
+  && /\.settings-row > \* \{ min-width: 0; \}/.test(css));
+check('touch targets are sized by input method, not by viewport width',
+  // A 1400px touchscreen laptop still needs a fingertip target, and a 390px
+  // phone has no hover at all. A width query gets both wrong.
+  /@media \(pointer: coarse\)/.test(css)
+  && /min-height:\s*48px/.test(css));
+check('the notched phone is handled, not just the short one',
+  /viewport-fit=cover/.test(html)
+  && (css.match(/env\(safe-area-inset-bottom\)/g) || []).length >= 3);
+check('coordinates may not wrap mid-number, but the city name beside them may',
+  /\.settings-row__coords\s*\{[^}]*white-space:\s*nowrap/.test(css)
+  && /\.settings-row__stack > :first-child \{ overflow-wrap: anywhere; \}/.test(css));
+
+// 27. the landing header was four controls wide on a 390px phone. Measured, the
+//     brand wordmark plus "Features", "How it works", "Sign in" and "Create
+//     account" need about 590px, which is why the page scrolled sideways.
+check('the mobile header keeps only the two account actions',
+  // The anchors are the ones to drop: the hero below covers the same ground and
+  // they are the only items in the bar that are not a task.
+  /@media \(max-width: 767px\) \{[\s\S]{0,200}?\.topbar__link \{ display: none; \}/.test(css)
+  // and they come back at the breakpoint the layout goes two-column, not at an
+  // arbitrary width that merely happens to fit.
+  && !/@media \(max-width: 400px\) \{[\s\S]{0,120}?\.topbar__link \{ display: none; \}/.test(css));
+check('the brand mark still names the site when the wordmark is dropped',
+  /\.brand__name \{ display: none; \}/.test(css)
+  // Otherwise hiding the visible text would also drop the accessible name.
+  && /class="brand"[^>]*aria-label="HazeGuard AI home"/.test(html));
+
 // 24. a boot-order bug the owner hit as "auto reload, then it says Not set".
 //     render() runs for the initial screen BEFORE initSession() resolves, so on a
 //     direct load of #profile it ran with currentUser still null and

@@ -58,9 +58,19 @@
   --fs-h1: clamp(1.45rem, 4vw, 1.9rem);
   --fs-h2: 1.16rem;
   --fs-h3: 1rem;
-  --fs-body: 0.95rem;
-  --fs-sm: 0.85rem;
-  --fs-xs: 0.75rem;
+  /* Body and the two steps under it. Raised from 0.95/0.85/0.75rem because on a
+     phone held at reading distance those read as cramped rather than dense, and
+     because 12px labels are the first thing to go unreadable on a cheap Android
+     panel. One step only: pushing far enough to feel airy on a 360px screen
+     costs line length on every card. */
+  --fs-body: 1rem;
+  --fs-sm: 0.875rem;
+  --fs-xs: 0.8125rem;
+  /* Hard floor for anything the user types into. iOS Safari zooms the viewport on
+     focus when a field computes under 16px, and never zooms back out, leaving
+     the user pinching to recover. That is a browser behaviour rather than a type
+     choice, so the floor holds at every viewport width. */
+  --fs-input: 1rem;
 
   /* Spacing scale */
   --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px;
@@ -221,6 +231,9 @@ button { font: inherit; color: inherit; }
   border-radius: var(--r-md);
   color: var(--text);
   font: inherit;
+  /* Overrides the `font: inherit` shorthand above, deliberately. 16px exactly:
+     see --fs-input for why this is a floor and not a preference. */
+  font-size: var(--fs-input);
   transition: border-color var(--t-fast), box-shadow var(--t-fast), background var(--t-fast);
 }
 .input::placeholder { color: var(--text-3); }
@@ -408,7 +421,7 @@ select.input option { background: var(--surface-2); color: var(--text); }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* ---------- brand ---------- */
-.brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); }
+.brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); min-width: 0; }
 .brand__mark { width: 34px; height: 34px; flex: none; }
 .brand__name { font-weight: 800; font-size: 1.06rem; letter-spacing: -0.02em; }
 .brand__name em { font-style: normal; color: var(--accent); }
@@ -774,6 +787,7 @@ select.input option { background: var(--surface-2); color: var(--text); }
 }
 .tabbar__item {
   flex: 1;
+  min-width: 0;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
   min-height: var(--tabbar-h);
   padding: 6px 2px;
@@ -919,7 +933,12 @@ select.input option { background: var(--surface-2); color: var(--text); }
   color: var(--text-3); width: 18px; height: 18px;
   pointer-events: none;
 }
-.search__input { flex: 1; padding-left: 40px; }
+/* `min-width: 0` is the whole point of this rule. A flex item defaults to
+   `min-width: auto`, which refuses to shrink below its content — and an <input>
+   carries an intrinsic width from its default size=20. Without the override the
+   search input plus its Search button cannot compress into a 320px screen, and
+   the row pushes the page sideways instead of wrapping. */
+.search__input { flex: 1; min-width: 0; padding-left: 40px; }
 /* The map is a real Leaflet canvas now. The placeholder graticule is gone, so
    this is only the frame around it plus the one thing Leaflet cannot do itself:
    paint a pin in the AQI band colour. */
@@ -1093,6 +1112,7 @@ select.input option { background: var(--surface-2); color: var(--text); }
 }
 .chat-body {
   flex: 1;
+  min-width: 0;
   overflow-y: auto;
   display: flex; flex-direction: column; gap: 10px;
   padding: var(--sp-2) 2px var(--sp-4);
@@ -1181,7 +1201,7 @@ select.input option { background: var(--surface-2); color: var(--text); }
   padding-top: var(--sp-3);
   padding-bottom: 4px;
 }
-.chat-compose__input { flex: 1; border-radius: var(--r-pill); padding-left: 18px; }
+.chat-compose__input { flex: 1; min-width: 0; border-radius: var(--r-pill); padding-left: 18px; }
 .chat-compose__send {
   width: 46px; height: 46px; flex: none;
   display: inline-grid; place-items: center;
@@ -1238,11 +1258,18 @@ select.input option { background: var(--surface-2); color: var(--text); }
   padding: 11px 0;
   border-top: 1px solid var(--line);
 }
+/* Every text child may shrink. The coordinate under the city is deliberately
+   unbreakable (it is data, not prose), so without this the row cannot narrow and
+   the whole profile screen scrolls sideways on a 320px phone. */
+.settings-row > * { min-width: 0; }
 .settings-row:first-of-type { border-top: 0; }
 .settings-row__label { display: inline-flex; align-items: center; gap: 8px; font-size: var(--fs-sm); font-weight: 600; color: var(--text-2); }
 /* The city name sits above its coordinates, so a row can carry both without the
    coordinates competing with the label for attention. */
 .settings-row__stack { display: inline-flex; flex-direction: column; gap: 1px; min-width: 0; }
+/* The city name may break across lines; only the coordinates are protected from
+   wrapping, because a coordinate split down the middle is worse than a wide one. */
+.settings-row__stack > :first-child { overflow-wrap: anywhere; }
 .settings-row__coords {
   font-size: var(--fs-xs);
   font-weight: 500;
@@ -1339,12 +1366,46 @@ select.input option { background: var(--surface-2); color: var(--text); }
 /* ==========================================================================
    Responsive
    ========================================================================== */
-@media (max-width: 400px) {
+/* The landing header holds four things: two in-page anchors and the two account
+   actions. Measured, all four plus the wordmark need about 590px, so a 390px
+   phone either wraps or pushes the page sideways. The two anchors are the ones
+   to lose: the hero immediately below covers the same ground, and they are the
+   only items here that are not a task. They return at the same breakpoint the
+   layout goes two-column, rather than at an arbitrary width that merely happens
+   to fit. */
+@media (max-width: 767px) {
   .topbar__link { display: none; }
+  /* Breathing room for the two that remain. Height still comes from the
+     pointer:coarse floor, so this only tightens the horizontal. */
+  .topbar__nav { gap: 6px; }
+  .topbar__nav .btn { padding: 9px 14px; }
+}
+
+/* Below this the two actions alone no longer leave room for the wordmark, so the
+   brand becomes its mark. The link keeps aria-label="HazeGuard AI home", so the
+   accessible name is unchanged — only the visible text goes. */
+@media (max-width: 400px) {
+  .brand__name { display: none; }
   .quick { grid-template-columns: 1fr; }
   .quick__item { flex-direction: row; align-items: center; gap: 12px; }
   .quick__icon { margin-bottom: 0; }
   .quick__hint { display: none; }
+}
+
+/* Touch is an input method, not a narrower viewport.
+ *
+ * Gated on the pointer rather than the width, because the two do not agree: a
+ * laptop with a touchscreen is 1400px wide and still needs a fingertip-sized
+ * target, while a 390px phone has no hover at all and so must never hide
+ * anything behind it. 44px is the accessibility floor; interactive rows get 48
+ * because a row is a bigger target than the text inside it suggests. */
+@media (pointer: coarse) {
+  .btn, .chip, .seg__btn, .input-btn, .icon-btn { min-height: 48px; }
+  /* Kept square: width and height move together so the glyph stays centred. */
+  .btn--icon { min-width: 44px; min-height: 44px; }
+  .settings-row { padding: 15px 0; }
+  .quick__item { padding: var(--sp-4); }
+  .tabbar__item { min-height: calc(var(--tabbar-h) + 6px); }
 }
 
 @media (min-width: 600px) {

@@ -65,7 +65,7 @@ cp .env.example .env                 # then set the database credentials
 php -r 'echo bin2hex(random_bytes(32)), PHP_EOL;'   # paste into CREDENTIAL_KEY
 php -S localhost:8000 index.php      # site + JSON API
 php tests/run.php                    # 278 backend acceptance checks
-node tests/static-check.cjs          # 93 frontend static checks
+node tests/static-check.cjs          # 113 frontend static checks
 node tests/locate-check.cjs          # geolocation promise sharing
 php tests/encoding-check.php         # mojibake scan
 node tests/serve.cjs 8123            # static server for tests/responsive.html
@@ -709,7 +709,7 @@ untrue and the default city is named instead (`stillReading()`).
 with a **numeric** `code` (1 = PERMISSION_DENIED), so comparing against the
 string `'PERMISSION_DENIED'` could never match.
 
-### Three traps this codebase has already hit
+### Six traps this codebase has already hit
 
 **1. Never round-trip a source file through PowerShell.** `Get-Content -Raw`
 decodes as Windows-1252 and `[IO.File]::WriteAllText` writes back as UTF-8, so
@@ -752,6 +752,25 @@ newer one has superseded, before painting *and* before scheduling — otherwise 
 superseded call would also install a second timer. The same reasoning applies
 whenever two writers can reach one screen: **last-to-start must win, not
 last-to-finish.**
+
+**4. A flex child cannot shrink below its content unless you say so.** A flex item
+defaults to `min-width: auto`, and an `<input>` carries an intrinsic width from
+its default `size=20`. So a search row — input plus a **Search** button — cannot
+compress into a 320px screen and pushes the page sideways instead of wrapping.
+`min-width: 0` on every flex child holding text is the fix. It bit
+`.search__input`, `.chat-compose__input`, `.chat-body` and `.tabbar__item`.
+
+**5. An input under 16px makes iOS zoom the page and never zoom back.** This is
+browser behaviour rather than a type preference, so `--fs-input: 1rem` is a floor
+applied at every viewport width, and it has to come *after* any `font: inherit`
+shorthand on the same rule.
+
+**6. Size touch targets by input method, not viewport width.** A 1400px
+touchscreen laptop still needs a fingertip-sized target, and a 390px phone has no
+hover at all. `@media (pointer: coarse)` covers both; a width query gets each
+wrong. Note that `body { overflow-x: hidden }` is a band-aid, not a fix — it hides
+overflow rather than removing its cause, which is why the `min-width: 0` work
+above matters more than it looks.
 
 ## What is intentionally *not* here
 
