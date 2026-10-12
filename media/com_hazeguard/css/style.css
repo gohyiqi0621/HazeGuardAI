@@ -41,66 +41,67 @@
   /* Surfaces — monochrome steps. The app sits on a dark base so the glass
      layers have something to refract; --surface is the opaque fallback used
      wherever backdrop-filter is unsupported or unwelcome. */
-  --bg: hsl(0 0% 6%);
-  --bg-alt: hsl(0 0% 9%);
-  --surface: hsl(0 0% 12%);
-  --surface-2: hsl(0 0% 16%);
-  --surface-3: hsl(0 0% 24%);
+  --bg: hsl(156 30% 95%);
+  --bg-alt: hsl(158 26% 91%);
+  --surface: hsl(0 0% 100%);
+  --surface-2: hsl(155 30% 95%);
+  --surface-3: hsl(156 24% 89%);
 
   /* Hairlines — white at low alpha, never a colour cast */
-  --line: hsl(0 0% 100% / 0.12);
-  --line-strong: hsl(0 0% 100% / 0.22);
+  --line: hsl(160 22% 30% / 0.12);
+  --line-strong: hsl(160 22% 30% / 0.22);
 
-  /* Text: white, stepped down by opacity only (AA against every surface above) */
-  --text: hsl(0 0% 100%);
-  --text-2: hsl(0 0% 100% / 0.78);
-  --text-3: hsl(0 0% 100% / 0.58);
+  /* Text: deep green-ink, stepped down by opacity (AA on every light surface) */
+  --text: hsl(165 32% 14%);
+  --text-2: hsl(166 22% 26% / 0.82);
+  --text-3: hsl(166 18% 32% / 0.66);
 
   /* Accent tokens keep their names so every existing call site keeps working;
      the values are grayscale now. --accent doubles as the focus/caret colour. */
-  --accent: hsl(0 0% 100%);
-  --accent-strong: hsl(0 0% 94%);
-  --accent-2: hsl(0 0% 100% / 0.78);
-  --accent-ink: hsl(0 0% 8%);
-  /* filled controls: a white pill carrying dark ink — the one bright surface */
-  --grad: linear-gradient(135deg, hsl(0 0% 100%) 0%, hsl(0 0% 84%) 130%);
-  --grad-hover: linear-gradient(135deg, hsl(0 0% 96%) 0%, hsl(0 0% 80%) 130%);
+  --accent: hsl(156 58% 34%);
+  --accent-strong: hsl(156 62% 27%);
+  --accent-2: hsl(170 52% 34%);
+  --accent-ink: hsl(0 0% 100%);
+  /* filled controls: a green gradient pill carrying white ink */
+  --grad: linear-gradient(135deg, hsl(152 62% 46%), hsl(168 68% 38%) 130%);
+  --grad-hover: linear-gradient(135deg, hsl(152 64% 41%), hsl(168 70% 33%) 130%);
 
-  /* AQI state scale — brightness ramp, not colour: worse air is brighter, so the
-     dangerous reading is the thing your eye lands on. Labels, tick numbers and
-     the reading itself carry the meaning; colour never does. */
-  --aqi-1: hsl(0 0% 55%);
-  --aqi-2: hsl(0 0% 67%);
-  --aqi-3: hsl(0 0% 79%);
-  --aqi-4: hsl(0 0% 88%);
-  --aqi-5: hsl(0 0% 96%);
-  /* ink variants: AA-safe for text sitting on dark glass */
-  --aqi-1-ink: hsl(0 0% 74%);
-  --aqi-2-ink: hsl(0 0% 80%);
-  --aqi-3-ink: hsl(0 0% 86%);
-  --aqi-4-ink: hsl(0 0% 92%);
-  --aqi-5-ink: hsl(0 0% 99%);
+  /* AQI state scale — real colour carries the meaning: green → yellow → orange →
+     red → purple, the conventional air-quality ramp. Every band still has a text
+     label and a number, so colour is reinforcement, never the only signal. */
+  --aqi-1: hsl(145 63% 40%);
+  --aqi-2: hsl(46 92% 48%);
+  --aqi-3: hsl(28 88% 50%);
+  --aqi-4: hsl(4 78% 54%);
+  --aqi-5: hsl(286 54% 50%);
+  /* ink variants: dark on the light fills (green/yellow/orange), white on the
+     saturated fills (red/purple) — all AA against their own band colour */
+  --aqi-1-ink: hsl(150 85% 10%);
+  --aqi-2-ink: hsl(40 90% 16%);
+  --aqi-3-ink: hsl(26 85% 14%);
+  --aqi-4-ink: hsl(0 0% 100%);
+  --aqi-5-ink: hsl(0 0% 100%);
   /* dark ink for numbers printed *inside* a bright AQI fill (map pins) */
   --aqi-on-fill: hsl(0 0% 8%);
 
-  --danger: hsl(0 0% 86%);
-  --ok: hsl(0 0% 100%);
+  --danger: hsl(354 70% 52%);
+  --ok: hsl(152 60% 40%);
 
-  /* Structural tones (formerly sky/violet/amber). They still step the hierarchy —
-     they just do it in gray now, so icons and eyebrows differ in weight, not hue. */
-  --sky: hsl(0 0% 74%);
-  --violet: hsl(0 0% 68%);
-  --amber: hsl(0 0% 62%);
+  /* Structural tones — a complementary palette so sections and icons step by hue,
+     not just weight: blue sky, violet, warm amber, beside the green brand. */
+  --sky: hsl(205 78% 50%);
+  --violet: hsl(265 60% 58%);
+  --amber: hsl(38 92% 50%);
 
   /* Light face gradients for icon tiles: dark ink sits on top of these, so they
-     must stay bright enough (≥66% lightness) to hold 4.5:1 against the icon. */
-  --grad-sky: linear-gradient(135deg, hsl(0 0% 92%), hsl(0 0% 76%) 130%);
-  --grad-violet: linear-gradient(135deg, hsl(0 0% 88%), hsl(0 0% 72%) 130%);
-  --grad-amber: linear-gradient(135deg, hsl(0 0% 84%), hsl(0 0% 68%) 130%);
+     stay bright enough (≥75% lightness) to hold 4.5:1 against the icon. */
+  --grad-sky: linear-gradient(135deg, hsl(205 85% 92%), hsl(205 75% 78%) 130%);
+  --grad-violet: linear-gradient(135deg, hsl(265 80% 93%), hsl(265 70% 82%) 130%);
+  --grad-amber: linear-gradient(135deg, hsl(40 95% 90%), hsl(38 90% 78%) 130%);
 
-  /* resting shadow gives cards quiet depth even before hover (neutral black:
-     a tinted shadow is invisible in a monochrome world) */
-  --shadow-rest: 0 1px 2px hsl(0 0% 0% / 0.35), 0 14px 30px -18px hsl(0 0% 0% / 0.55);
+  /* resting shadow gives cards quiet depth even before hover — a soft green-gray
+     tint keeps the light theme feeling airy rather than inky */
+  --shadow-rest: 0 1px 2px hsl(165 30% 30% / 0.10), 0 14px 30px -18px hsl(165 30% 28% / 0.22);
 
   /* Type */
   --font: 'Poppins', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -132,8 +133,8 @@
   --r-sm: 10px; --r-md: 14px; --r-lg: 20px; --r-xl: 28px; --r-pill: 999px;
 
   /* Depth: offset + soft blur — neutral black so shadows read on a dark base */
-  --shadow-1: 0 1px 2px hsl(0 0% 0% / 0.4), 0 10px 30px -14px hsl(0 0% 0% / 0.5);
-  --shadow-2: 0 2px 4px hsl(0 0% 0% / 0.45), 0 24px 48px -20px hsl(0 0% 0% / 0.6);
+  --shadow-1: 0 1px 2px hsl(165 28% 30% / 0.10), 0 10px 30px -14px hsl(165 28% 26% / 0.20);
+  --shadow-2: 0 2px 4px hsl(165 26% 30% / 0.12), 0 24px 48px -20px hsl(165 26% 24% / 0.26);
 
   /* Motion */
   --t-fast: 120ms ease-out;
@@ -151,7 +152,7 @@ html { -webkit-text-size-adjust: 100%; }
 html {
   /* dark UI by default: native scrollbars, form controls, date pickers and the
      overscroll area follow the theme instead of flashing white */
-  color-scheme: dark;
+  color-scheme: light;
 }
 body {
   margin: 0;
@@ -168,8 +169,8 @@ body::before {
   content: "";
   position: fixed; inset: 0;
   background:
-    radial-gradient(1100px 600px at 85% -10%, hsl(0 0% 100% / 0.07), transparent 60%),
-    radial-gradient(900px 520px at -10% 12%, hsl(0 0% 100% / 0.08), transparent 55%);
+    radial-gradient(1100px 600px at 85% -10%, hsl(156 60% 45% / 0.16), transparent 60%),
+    radial-gradient(900px 520px at -10% 12%, hsl(190 70% 50% / 0.12), transparent 55%);
   pointer-events: none;
   z-index: -1;
 }
@@ -185,9 +186,9 @@ body::before {
   overflow: hidden;
   pointer-events: none;
   background:
-    radial-gradient(1100px 700px at 78% -8%, hsl(0 0% 100% / 0.08), transparent 60%),
-    radial-gradient(900px 600px at -8% 18%, hsl(0 0% 100% / 0.06), transparent 55%),
-    linear-gradient(180deg, hsl(0 0% 8%), hsl(0 0% 5%));
+    radial-gradient(1100px 700px at 78% -8%, hsl(156 60% 45% / 0.20), transparent 60%),
+    radial-gradient(900px 600px at -8% 18%, hsl(190 70% 50% / 0.15), transparent 55%),
+    linear-gradient(180deg, hsl(156 30% 95%), hsl(168 32% 90%));
 }
 .bg-video {
   position: absolute; inset: 0;
@@ -196,14 +197,14 @@ body::before {
   /* the monochrome treatment lives here so the video, the tiles it plays over
      and the scrim all read as one grayscale world. Kept well down in brightness
      so white body text still clears 4.5:1 against the brightest frame. */
-  filter: grayscale(1) contrast(1.08) brightness(0.6);
-  opacity: 0.85;
+  filter: saturate(0.95) brightness(1.05) contrast(0.98);
+  opacity: 0.5;
 }
 .bg-scrim {
   position: absolute; inset: 0;
   /* Sits over the video, under everything else. The middle stop is the one that
      matters: it is where the hero copy and the feature sections live. */
-  background: linear-gradient(180deg, hsl(0 0% 4% / 0.78) 0%, hsl(0 0% 4% / 0.64) 45%, hsl(0 0% 5% / 0.9) 100%);
+  background: linear-gradient(180deg, hsl(156 30% 95% / 0.55) 0%, hsl(158 30% 93% / 0.4) 45%, hsl(160 30% 90% / 0.72) 100%);
 }
 /* the loop belongs to the landing and auth screens only; app screens fall back
    to the static frame — no JS involved, the router already sets data-kind */
@@ -212,7 +213,7 @@ body[data-kind="app"] .bg-video { display: none; }
 @media (prefers-reduced-motion: reduce) {
   .bg-video { display: none; }
 }
-::selection { background: hsl(0 0% 100% / 0.32); color: var(--text); }
+::selection { background: hsl(156 58% 40% / 0.22); color: var(--text); }
 * { caret-color: var(--accent); }
 :focus-visible {
   outline: 2px solid var(--accent);
@@ -282,7 +283,7 @@ button { font: inherit; color: inherit; }
 .btn--primary {
   background: var(--grad);
   color: var(--accent-ink);
-  box-shadow: 0 8px 24px -12px hsl(0 0% 0% / 0.35);
+  box-shadow: 0 8px 24px -12px hsl(156 58% 34% / 0.35);
 }
 .btn--primary:hover:not(:disabled) { background: var(--grad-hover); }
 .btn--ghost {
@@ -296,8 +297,8 @@ button { font: inherit; color: inherit; }
 .btn--sm { min-height: 38px; padding: 8px 14px; font-size: 0.88rem; }
 .btn--lg { min-height: 50px; padding: 13px 24px; font-size: 1rem; }
 .btn--block { width: 100%; }
-.btn--danger { color: var(--danger); border-color: hsl(0 0% 100% / 0.35); }
-.btn--danger:hover { background: hsl(0 0% 100% / 0.12); }
+.btn--danger { color: var(--danger); border-color: hsl(354 70% 50% / 0.4); }
+.btn--danger:hover { background: hsl(354 70% 50% / 0.12); }
 
 .icon-btn {
   display: inline-flex; align-items: center; justify-content: center;
@@ -342,11 +343,11 @@ button { font: inherit; color: inherit; }
   transition: border-color var(--t-fast), box-shadow var(--t-fast), background var(--t-fast);
 }
 .input::placeholder { color: var(--text-3); }
-.input:hover { border-color: hsl(0 0% 100% / 0.3); }
+.input:hover { border-color: var(--line-strong); }
 .input:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px hsl(0 0% 100% / 0.18);
+  box-shadow: 0 0 0 3px hsl(156 58% 34% / 0.18);
 }
 .input[aria-invalid="true"] { border-color: var(--danger); }
 .input[aria-invalid="true"]:focus { box-shadow: 0 0 0 3px hsl(0 0% 100% / 0.18); }
@@ -369,7 +370,7 @@ select.input option { background: var(--surface-2); color: var(--text); }
   color: var(--text-3); cursor: pointer;
   transition: color var(--t-fast), background var(--t-fast);
 }
-.input-btn:hover { color: var(--text); background: hsl(0 0% 100% / 0.08); }
+.input-btn:hover { color: var(--text); background: var(--surface-3); }
 
 .field__error {
   display: flex; align-items: center; gap: 6px;
@@ -377,7 +378,7 @@ select.input option { background: var(--surface-2); color: var(--text); }
   font-size: var(--fs-sm); font-weight: 600;
   color: var(--danger);
 }
-.field__error::before { content: "!"; display: inline-grid; place-items: center; width: 15px; height: 15px; border-radius: 50%; background: hsl(0 0% 100% / 0.18); font-size: 11px; flex: none; }
+.field__error::before { content: "!"; display: inline-grid; place-items: center; width: 15px; height: 15px; border-radius: 50%; background: color-mix(in srgb, var(--danger) 18%, var(--surface)); color: var(--danger); font-size: 11px; flex: none; }
 .field__hint { margin-top: 6px; font-size: var(--fs-xs); color: var(--text-3); }
 
 .check {
@@ -408,8 +409,8 @@ select.input option { background: var(--surface-2); color: var(--text); }
 .chip:active { transform: scale(0.97); }
 .chip input { position: absolute; opacity: 0; pointer-events: none; }
 .chip:has(input:checked) {
-  background: hsl(0 0% 100% / 0.14);
-  border-color: hsl(0 0% 100% / 0.55);
+  background: color-mix(in srgb, var(--accent) 16%, var(--surface));
+  border-color: hsl(156 58% 34% / 0.5);
   color: var(--accent);
 }
 .chip:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -452,23 +453,23 @@ select.input option { background: var(--surface-2); color: var(--text); }
 }
 .badge--demo {
   color: var(--accent-2);
-  background: hsl(0 0% 100% / 0.1);
-  border: 1px dashed hsl(0 0% 100% / 0.5);
+  background: color-mix(in srgb, var(--accent-2) 14%, var(--surface));
+  border: 1px dashed hsl(170 52% 34% / 0.4);
 }
 /* Same badge, opposite meaning: solid and undashed, because the value beside it
    is a real reading rather than a placeholder. */
 .badge--live {
   color: var(--aqi-1-ink);
-  background: hsl(0 0% 100% / 0.12);
-  border: 1px solid hsl(0 0% 100% / 0.45);
+  background: color-mix(in srgb, var(--aqi-1) 16%, var(--surface));
+  border: 1px solid hsl(145 63% 40% / 0.45);
 }
 /* A reading exists but is not current, there is none at all, or none has been
    asked for yet. Muted on purpose: it must read as neither "live" nor "demo". */
 .badge--stale,
 .badge--loading {
   color: var(--aqi-2-ink);
-  background: hsl(0 0% 100% / 0.14);
-  border: 1px solid hsl(0 0% 100% / 0.5);
+  background: color-mix(in srgb, var(--aqi-2) 16%, var(--surface));
+  border: 1px solid hsl(46 92% 48% / 0.45);
 }
 .ribbon {
   display: inline-flex; align-items: center; gap: 7px;
@@ -480,13 +481,13 @@ select.input option { background: var(--surface-2); color: var(--text); }
 .ribbon::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
 /* The band shows in the border, stepped by the brightness ramp: Good is the
    dimmest edge, Very unhealthy the brightest. The words carry the meaning. */
-.ribbon--good, .ribbon--1 { color: var(--aqi-1-ink); background: hsl(0 0% 100% / 0.1); border-color: var(--aqi-1); }
-.ribbon--2 { color: var(--aqi-2-ink); background: hsl(0 0% 100% / 0.09); border-color: var(--aqi-2); }
-.ribbon--3 { color: var(--aqi-3-ink); background: hsl(0 0% 100% / 0.1); border-color: var(--aqi-3); }
-.ribbon--4 { color: var(--aqi-4-ink); background: hsl(0 0% 100% / 0.1); border-color: var(--aqi-4); }
+.ribbon--good, .ribbon--1 { color: var(--aqi-1-ink); background: color-mix(in srgb, var(--aqi-1) 15%, var(--surface)); border-color: var(--aqi-1); }
+.ribbon--2 { color: var(--aqi-2-ink); background: color-mix(in srgb, var(--aqi-2) 15%, var(--surface)); border-color: var(--aqi-2); }
+.ribbon--3 { color: var(--aqi-3-ink); background: color-mix(in srgb, var(--aqi-3) 15%, var(--surface)); border-color: var(--aqi-3); }
+.ribbon--4 { color: var(--aqi-4-ink); background: color-mix(in srgb, var(--aqi-4) 18%, var(--surface)); border-color: var(--aqi-4); }
 /* "We have no reading" — deliberately not one of the five AQI colours, so an
    absent reading cannot be mistaken for a band. */
-.ribbon--none { color: var(--text-3); background: hsl(0 0% 100% / 0.12); border-color: hsl(0 0% 100% / 0.4); }
+.ribbon--none { color: var(--text-3); background: var(--surface-2); border-color: var(--line-strong); }
 .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; flex: none; }
 .dot--1 { background: var(--aqi-1); } .dot--2 { background: var(--aqi-2); }
 .dot--3 { background: var(--aqi-3); } .dot--4 { background: var(--aqi-4); }
@@ -496,7 +497,7 @@ select.input option { background: var(--surface-2); color: var(--text); }
   display: inline-flex; padding: 3px 10px; border-radius: var(--r-pill);
   font-size: var(--fs-xs); font-weight: 700;
 }
-.pill--ok { color: var(--ok); background: hsl(0 0% 100% / 0.12); border: 1px solid hsl(0 0% 100% / 0.4); }
+.pill--ok { color: var(--ok); background: color-mix(in srgb, var(--ok) 14%, var(--surface)); border: 1px solid hsl(152 60% 40% / 0.4); }
 
 /* source/timestamp line — appears wherever data appears */
 .src-line {
@@ -509,8 +510,8 @@ select.input option { background: var(--surface-2); color: var(--text); }
 .notice {
   display: flex; gap: 12px; align-items: flex-start;
   padding: var(--sp-4);
-  background: hsl(0 0% 100% / 0.07);
-  border: 1px solid hsl(0 0% 100% / 0.25);
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+  border: 1px solid var(--line-strong);
   border-radius: var(--r-md);
 }
 .notice .icon { color: var(--accent-2); margin-top: 2px; }
@@ -537,7 +538,7 @@ select.input option { background: var(--surface-2); color: var(--text); }
 .splash {
   position: fixed; inset: 0; z-index: 200;
   display: grid; place-items: center;
-  background: linear-gradient(180deg, hsl(0 0% 8%), hsl(0 0% 5%));
+  background: linear-gradient(180deg, hsl(156 30% 96%), hsl(160 28% 92%));
   transition: opacity 400ms ease;
 }
 .splash.is-leaving { opacity: 0; pointer-events: none; }
@@ -545,18 +546,18 @@ select.input option { background: var(--surface-2); color: var(--text); }
 .splash__ring { position: relative; display: grid; place-items: center; width: 88px; height: 88px; }
 .splash__ring::before {
   content: ""; position: absolute; inset: 0; border-radius: 50%;
-  background: conic-gradient(from 0deg, hsl(0 0% 100% / 0) 0deg, hsl(0 0% 100% / 0) 240deg, hsl(0 0% 100%) 320deg, hsl(0 0% 74%) 360deg);
+  background: conic-gradient(from 0deg, hsl(156 58% 34% / 0) 0deg, hsl(156 58% 34% / 0) 240deg, hsl(156 58% 34%) 320deg, hsl(168 60% 40%) 360deg);
   -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3.5px), #000 calc(100% - 2.5px));
   mask: radial-gradient(farthest-side, transparent calc(100% - 3.5px), #000 calc(100% - 2.5px));
   animation: splash-spin 1.15s linear infinite;
 }
 .splash__mark { width: 46px; height: 46px; }
-.splash__name { font-size: 1.05rem; font-weight: 800; letter-spacing: -0.02em; color: hsl(0 0% 100%); }
-.splash__name em { font-family: var(--font-em); font-style: italic; font-weight: 400; color: hsl(0 0% 88%); } /* serif accent */
+.splash__name { font-size: 1.05rem; font-weight: 800; letter-spacing: -0.02em; color: hsl(165 32% 14%); }
+.splash__name em { font-family: var(--font-em); font-style: italic; font-weight: 400; color: var(--accent); } /* serif accent */
 .splash__dots { display: inline-flex; gap: 6px; }
 .splash__dots i {
   width: 6px; height: 6px; border-radius: 50%;
-  background: hsl(0 0% 62%);
+  background: hsl(166 20% 45%);
   animation: splash-dot 1.2s ease-in-out infinite;
 }
 .splash__dots i:nth-child(2) { animation-delay: 0.15s; }
@@ -583,11 +584,11 @@ select.input option { background: var(--surface-2); color: var(--text); }
   color: var(--text-2); text-decoration: none; font-weight: 600; font-size: 0.9rem;
   padding: 8px 10px; border-radius: var(--r-sm);
 }
-.topbar__link:hover { color: var(--text); background: hsl(0 0% 100% / 0.08); }
+.topbar__link:hover { color: var(--text); background: var(--surface-2); }
 
 /* Top vignette rather than a wash: it deepens behind the header and the
    headline, which is exactly where the white copy sits. */
-.hero { padding: var(--sp-8) 0 var(--sp-9); background: linear-gradient(180deg, hsl(0 0% 0% / 0.35) 0%, hsl(0 0% 0% / 0.12) 55%, transparent 100%); }
+.hero { padding: var(--sp-8) 0 var(--sp-9); background: linear-gradient(180deg, hsl(156 30% 96% / 0.4) 0%, transparent 60%); }
 .hero__inner {
   max-width: 1160px; margin: 0 auto;
   padding: 0 var(--content-x);
@@ -612,7 +613,7 @@ select.input option { background: var(--surface-2); color: var(--text); }
 .instrument::after {
   content: ""; position: absolute; inset: auto -30% -55% auto;
   width: 280px; height: 280px;
-  background: radial-gradient(circle, hsl(0 0% 100% / 0.14), transparent 65%);
+  background: radial-gradient(circle, hsl(156 58% 40% / 0.14), transparent 65%);
   pointer-events: none;
 }
 .instrument__head { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); margin-bottom: var(--sp-4); }
@@ -655,9 +656,9 @@ select.input option { background: var(--surface-2); color: var(--text); }
   width: 14px; height: 14px;
   transform: translateX(-50%);
   border-radius: 50%;
-  background: var(--text);
-  border: 3px solid var(--bg);
-  box-shadow: 0 0 0 2px var(--text), 0 4px 10px hsl(0 0% 0% / 0.3);
+  background: var(--accent);
+  border: 3px solid var(--surface);
+  box-shadow: 0 0 0 2px var(--accent), 0 4px 10px hsl(165 30% 20% / 0.3);
 }
 .aqi-band__labels {
   position: relative;
@@ -695,9 +696,9 @@ select.input option { background: var(--surface-2); color: var(--text); }
   position: relative;
   min-height: 190px;
   background:
-    repeating-linear-gradient(0deg, transparent 0 39px, hsl(0 0% 100% / 0.07) 39px 40px),
-    repeating-linear-gradient(90deg, transparent 0 39px, hsl(0 0% 100% / 0.07) 39px 40px),
-    radial-gradient(600px 300px at 30% 20%, hsl(0 0% 100% / 0.07), transparent 60%),
+    repeating-linear-gradient(0deg, transparent 0 39px, hsl(160 22% 30% / 0.07) 39px 40px),
+    repeating-linear-gradient(90deg, transparent 0 39px, hsl(160 22% 30% / 0.07) 39px 40px),
+    radial-gradient(600px 300px at 30% 20%, hsl(160 22% 30% / 0.06), transparent 60%),
     var(--surface-2);
   border-bottom: 1px solid var(--line);
 }
@@ -708,7 +709,7 @@ select.input option { background: var(--surface-2); color: var(--text); }
   display: inline-flex; align-items: center; gap: 5px;
   padding: 4px 9px 4px 6px;
   border-radius: var(--r-pill);
-  background: hsl(0 0% 12% / 0.94);
+  background: var(--surface);
   border: 1px solid var(--line-strong);
   font-size: 0.72rem; font-weight: 800;
   font-variant-numeric: tabular-nums;
@@ -866,7 +867,7 @@ select.input option { background: var(--surface-2); color: var(--text); }
 .otp-box:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px hsl(0 0% 100% / 0.18);
+  box-shadow: 0 0 0 3px hsl(156 58% 34% / 0.18);
 }
 .otp-actions { margin-bottom: var(--sp-4); }
 .otp-countdown {
@@ -1447,7 +1448,7 @@ select.input option { background: var(--surface-2); color: var(--text); }
   background: var(--text-2);
   transition: transform var(--t), background var(--t-fast);
 }
-.switch:checked { background: hsl(0 0% 100% / 0.3); border-color: hsl(0 0% 100% / 0.6); }
+.switch:checked { background: var(--accent); border-color: var(--accent-strong); }
 .switch:checked::after { transform: translateX(18px); background: var(--accent); }
 
 /* ==========================================================================
@@ -1494,10 +1495,10 @@ select.input option { background: var(--surface-2); color: var(--text); }
 :root {
   /* muted text and the elevated-surface shadow, restated here because this block
      was appended after the base one — edit BOTH blocks together, never one. */
-  --text-2: hsl(0 0% 100% / 0.78);
-  --text-3: hsl(0 0% 100% / 0.58);
-  --shadow-3: 0 4px 10px hsl(0 0% 0% / 0.45), 0 32px 64px -30px hsl(0 0% 0% / 0.6);
-  --ring: 0 0 0 4px hsl(0 0% 100% / 0.28);
+  --text-2: hsl(166 22% 26% / 0.82);
+  --text-3: hsl(166 18% 32% / 0.66);
+  --shadow-3: 0 4px 10px hsl(165 26% 30% / 0.12), 0 32px 64px -30px hsl(165 26% 24% / 0.26);
+  --ring: 0 0 0 4px hsl(156 58% 38% / 0.28);
 }
 
 /* Section eyebrows read as a quiet serif label — deliberately softer than the
@@ -1526,7 +1527,7 @@ select.input option { background: var(--surface-2); color: var(--text); }
 /* Alternating band: translucent on purpose. An opaque --bg-alt here would cut a
    hard slab straight through the background layer behind the landing page. */
 .section--alt {
-  background: linear-gradient(180deg, hsl(0 0% 100% / 0.05), hsl(0 0% 100% / 0.015));
+  background: linear-gradient(180deg, hsl(156 30% 92% / 0.5), hsl(156 30% 90% / 0.25));
 }
 
 /* DEPTH — interactive cards lift off the page on hover */
@@ -1543,7 +1544,7 @@ select.input option { background: var(--surface-2); color: var(--text); }
    reads as noise, and they would both want ::before anyway. */
 
 /* buttons: clear, gentle hover feedback */
-.btn--primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 12px 28px -12px hsl(0 0% 0% / 0.45), var(--ring); }
+.btn--primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 12px 28px -12px hsl(156 58% 34% / 0.45), var(--ring); }
 .btn--ghost:hover:not(:disabled), .btn--quiet:hover:not(:disabled) { transform: translateY(-1px); }
 
 /* keyboard focus gets a soft glow on top of the visible ring */
@@ -1584,9 +1585,9 @@ select.input option { background: var(--surface-2); color: var(--text); }
    and below page content, so it tints the video rather than hiding it. ---- */
 body::before {
   background:
-    radial-gradient(820px 520px at 88% -8%, hsl(0 0% 100% / 0.12), transparent 60%),
-    radial-gradient(760px 520px at -8% 8%, hsl(0 0% 100% / 0.14), transparent 55%),
-    radial-gradient(680px 480px at 48% 118%, hsl(0 0% 100% / 0.12), transparent 60%);
+    radial-gradient(820px 520px at 88% -8%, hsl(156 60% 45% / 0.18), transparent 60%),
+    radial-gradient(760px 520px at -8% 8%, hsl(190 70% 50% / 0.14), transparent 55%),
+    radial-gradient(680px 480px at 48% 118%, hsl(168 65% 45% / 0.12), transparent 60%);
 }
 
 /* reusable drifting colour blobs */
