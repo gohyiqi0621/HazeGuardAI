@@ -1,59 +1,110 @@
 /* ==========================================================================
    HazeGuard AI — design system + screens
-   Deep green-black foundation · emerald/cyan accents · Manrope (self-hosted)
+   Monochrome grayscale foundation · liquid-glass surfaces · Poppins + Source Serif 4 italic (self-hosted)
    ========================================================================== */
 
+/* Poppins (display + body) and Source Serif 4 italic (selective emphasis).
+   Self-hosted, latin subset, one face per weight because neither is variable.
+   swap: text paints in the system fallback instead of blocking on the network. */
 @font-face {
-  font-family: 'Manrope';
-  src: url('../assets/fonts/manrope-latin.woff2') format('woff2');
-  font-weight: 400 800;
-  font-display: swap;
+  font-family: 'Poppins';
+  src: url('../assets/fonts/poppins-latin-400.woff2') format('woff2');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Poppins';
+  src: url('../assets/fonts/poppins-latin-500.woff2') format('woff2');
+  font-weight: 500; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Poppins';
+  src: url('../assets/fonts/poppins-latin-600.woff2') format('woff2');
+  font-weight: 600; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Poppins';
+  src: url('../assets/fonts/poppins-latin-700.woff2') format('woff2');
+  font-weight: 700; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Poppins';
+  src: url('../assets/fonts/poppins-latin-800.woff2') format('woff2');
+  font-weight: 800; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Source Serif 4';
+  src: url('../assets/fonts/source-serif-4-latin-400-italic.woff2') format('woff2');
+  font-weight: 400; font-style: italic; font-display: swap;
 }
 
 :root {
-  /* Surfaces (light, green-tinted steps) */
-  --bg: #f4f7f5;
-  --bg-alt: #e9efec;
-  --surface: #ffffff;
-  --surface-2: #f0f5f2;
-  --surface-3: #e1ebe5;
+  /* Surfaces — monochrome steps. The app sits on a dark base so the glass
+     layers have something to refract; --surface is the opaque fallback used
+     wherever backdrop-filter is unsupported or unwelcome. */
+  --bg: hsl(0 0% 6%);
+  --bg-alt: hsl(0 0% 9%);
+  --surface: hsl(0 0% 12%);
+  --surface-2: hsl(0 0% 16%);
+  --surface-3: hsl(0 0% 24%);
 
-  /* Hairlines */
-  --line: rgba(11, 31, 25, 0.1);
-  --line-strong: rgba(11, 31, 25, 0.2);
+  /* Hairlines — white at low alpha, never a colour cast */
+  --line: hsl(0 0% 100% / 0.12);
+  --line-strong: hsl(0 0% 100% / 0.22);
 
-  /* Text (tinted from the hue, never pure gray) */
-  --text: #0b1f19;
-  --text-2: #355043;
-  --text-3: #5b7266;
+  /* Text: white, stepped down by opacity only (AA against every surface above) */
+  --text: hsl(0 0% 100%);
+  --text-2: hsl(0 0% 100% / 0.78);
+  --text-3: hsl(0 0% 100% / 0.58);
 
-  /* Accents (dark enough to read as text on light surfaces) */
-  --accent: #047857;
-  --accent-strong: #059669;
-  --accent-2: #0e7490;
-  --accent-ink: #04140d;
-  /* bright brand gradient for filled controls (dark ink label on top) */
-  --grad: linear-gradient(135deg, #34d399, #22d3ee 130%);
-  --grad-hover: linear-gradient(135deg, #4be0a7, #3ddcf0 130%);
+  /* Accent tokens keep their names so every existing call site keeps working;
+     the values are grayscale now. --accent doubles as the focus/caret colour. */
+  --accent: hsl(0 0% 100%);
+  --accent-strong: hsl(0 0% 94%);
+  --accent-2: hsl(0 0% 100% / 0.78);
+  --accent-ink: hsl(0 0% 8%);
+  /* filled controls: a white pill carrying dark ink — the one bright surface */
+  --grad: linear-gradient(135deg, hsl(0 0% 100%) 0%, hsl(0 0% 84%) 130%);
+  --grad-hover: linear-gradient(135deg, hsl(0 0% 96%) 0%, hsl(0 0% 80%) 130%);
 
-  /* AQI state scale — colour carries meaning only here */
-  --aqi-1: #34d399;
-  --aqi-2: #facc15;
-  --aqi-3: #fb923c;
-  --aqi-4: #f87171;
-  --aqi-5: #e879f9;
-  /* ink variants: AA-safe for text on light surfaces */
-  --aqi-1-ink: #047857;
-  --aqi-2-ink: #a16207;
-  --aqi-3-ink: #c2410c;
-  --aqi-4-ink: #b91c1c;
-  --aqi-5-ink: #a21caf;
+  /* AQI state scale — brightness ramp, not colour: worse air is brighter, so the
+     dangerous reading is the thing your eye lands on. Labels, tick numbers and
+     the reading itself carry the meaning; colour never does. */
+  --aqi-1: hsl(0 0% 55%);
+  --aqi-2: hsl(0 0% 67%);
+  --aqi-3: hsl(0 0% 79%);
+  --aqi-4: hsl(0 0% 88%);
+  --aqi-5: hsl(0 0% 96%);
+  /* ink variants: AA-safe for text sitting on dark glass */
+  --aqi-1-ink: hsl(0 0% 74%);
+  --aqi-2-ink: hsl(0 0% 80%);
+  --aqi-3-ink: hsl(0 0% 86%);
+  --aqi-4-ink: hsl(0 0% 92%);
+  --aqi-5-ink: hsl(0 0% 99%);
+  /* dark ink for numbers printed *inside* a bright AQI fill (map pins) */
+  --aqi-on-fill: hsl(0 0% 8%);
 
-  --danger: #b91c1c;
-  --ok: #047857;
+  --danger: hsl(0 0% 86%);
+  --ok: hsl(0 0% 100%);
+
+  /* Structural tones (formerly sky/violet/amber). They still step the hierarchy —
+     they just do it in gray now, so icons and eyebrows differ in weight, not hue. */
+  --sky: hsl(0 0% 74%);
+  --violet: hsl(0 0% 68%);
+  --amber: hsl(0 0% 62%);
+
+  /* Light face gradients for icon tiles: dark ink sits on top of these, so they
+     must stay bright enough (≥66% lightness) to hold 4.5:1 against the icon. */
+  --grad-sky: linear-gradient(135deg, hsl(0 0% 92%), hsl(0 0% 76%) 130%);
+  --grad-violet: linear-gradient(135deg, hsl(0 0% 88%), hsl(0 0% 72%) 130%);
+  --grad-amber: linear-gradient(135deg, hsl(0 0% 84%), hsl(0 0% 68%) 130%);
+
+  /* resting shadow gives cards quiet depth even before hover (neutral black:
+     a tinted shadow is invisible in a monochrome world) */
+  --shadow-rest: 0 1px 2px hsl(0 0% 0% / 0.35), 0 14px 30px -18px hsl(0 0% 0% / 0.55);
 
   /* Type */
-  --font: 'Manrope', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font: 'Poppins', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-em: 'Source Serif 4', Georgia, 'Times New Roman', serif;
   --fs-display: clamp(2.1rem, 7vw, 3.4rem);
   --fs-h1: clamp(1.45rem, 4vw, 1.9rem);
   --fs-h2: 1.16rem;
@@ -80,9 +131,9 @@
   /* Radii */
   --r-sm: 10px; --r-md: 14px; --r-lg: 20px; --r-xl: 28px; --r-pill: 999px;
 
-  /* Depth: offset + soft blur */
-  --shadow-1: 0 1px 2px rgba(11, 31, 25, 0.06), 0 10px 30px -14px rgba(11, 31, 25, 0.12);
-  --shadow-2: 0 2px 4px rgba(11, 31, 25, 0.08), 0 24px 48px -20px rgba(11, 31, 25, 0.16);
+  /* Depth: offset + soft blur — neutral black so shadows read on a dark base */
+  --shadow-1: 0 1px 2px hsl(0 0% 0% / 0.4), 0 10px 30px -14px hsl(0 0% 0% / 0.5);
+  --shadow-2: 0 2px 4px hsl(0 0% 0% / 0.45), 0 24px 48px -20px hsl(0 0% 0% / 0.6);
 
   /* Motion */
   --t-fast: 120ms ease-out;
@@ -97,6 +148,11 @@
 [hidden] { display: none !important; }
 
 html { -webkit-text-size-adjust: 100%; }
+html {
+  /* dark UI by default: native scrollbars, form controls, date pickers and the
+     overscroll area follow the theme instead of flashing white */
+  color-scheme: dark;
+}
 body {
   margin: 0;
   font-family: var(--font);
@@ -112,12 +168,51 @@ body::before {
   content: "";
   position: fixed; inset: 0;
   background:
-    radial-gradient(1100px 600px at 85% -10%, rgba(34, 211, 238, 0.07), transparent 60%),
-    radial-gradient(900px 520px at -10% 12%, rgba(52, 211, 153, 0.08), transparent 55%);
+    radial-gradient(1100px 600px at 85% -10%, hsl(0 0% 100% / 0.07), transparent 60%),
+    radial-gradient(900px 520px at -10% 12%, hsl(0 0% 100% / 0.08), transparent 55%);
   pointer-events: none;
   z-index: -1;
 }
-::selection { background: rgba(52, 211, 153, 0.32); color: var(--text); }
+/* ---- background stage: video + scrim as ONE negative-z layer ----
+   Stack: canvas (body background, propagated from body) → .bg-stage (-2) →
+   the mist above (-1) → page content. Because the stage is negative-z and
+   pointer-events:none, it can never sit above content or swallow clicks.
+   Its own background is the static frame: it shows before the video paints,
+   while it buffers, when autoplay is blocked, and when there is no video. */
+.bg-stage {
+  position: fixed; inset: 0;
+  z-index: -2;
+  overflow: hidden;
+  pointer-events: none;
+  background:
+    radial-gradient(1100px 700px at 78% -8%, hsl(0 0% 100% / 0.08), transparent 60%),
+    radial-gradient(900px 600px at -8% 18%, hsl(0 0% 100% / 0.06), transparent 55%),
+    linear-gradient(180deg, hsl(0 0% 8%), hsl(0 0% 5%));
+}
+.bg-video {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  /* the monochrome treatment lives here so the video, the tiles it plays over
+     and the scrim all read as one grayscale world. Kept well down in brightness
+     so white body text still clears 4.5:1 against the brightest frame. */
+  filter: grayscale(1) contrast(1.08) brightness(0.6);
+  opacity: 0.85;
+}
+.bg-scrim {
+  position: absolute; inset: 0;
+  /* Sits over the video, under everything else. The middle stop is the one that
+     matters: it is where the hero copy and the feature sections live. */
+  background: linear-gradient(180deg, hsl(0 0% 4% / 0.78) 0%, hsl(0 0% 4% / 0.64) 45%, hsl(0 0% 5% / 0.9) 100%);
+}
+/* the loop belongs to the landing and auth screens only; app screens fall back
+   to the static frame — no JS involved, the router already sets data-kind */
+body[data-kind="app"] .bg-video { display: none; }
+/* and never for anyone who asked for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .bg-video { display: none; }
+}
+::selection { background: hsl(0 0% 100% / 0.32); color: var(--text); }
 * { caret-color: var(--accent); }
 :focus-visible {
   outline: 2px solid var(--accent);
@@ -125,8 +220,11 @@ body::before {
   border-radius: 6px;
 }
 img, svg { max-width: 100%; }
-h1, h2, h3 { line-height: 1.2; letter-spacing: -0.015em; margin: 0; font-weight: 700; }
+h1, h2, h3 { line-height: 1.2; letter-spacing: -0.015em; margin: 0; font-weight: 700; text-wrap: balance; }
 p { margin: 0; }
+/* Source Serif italic is the emphasis voice; the one place that opts OUT is the
+   stat delta, where "em" is a unit fragment, not emphasis. */
+em { font-family: var(--font-em); font-style: italic; }
 a { color: var(--accent-2); text-underline-offset: 3px; }
 button { font: inherit; color: inherit; }
 
@@ -150,7 +248,14 @@ button { font: inherit; color: inherit; }
   letter-spacing: -0.03em;
   margin: 0;
 }
-.display__accent { color: var(--accent); }
+/* The signature typographic move: one serif phrase inside a Poppins headline. */
+.display__accent {
+  font-family: var(--font-em);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.005em;
+  color: var(--text);
+}
 
 /* ---------- cards ---------- */
 .card {
@@ -177,7 +282,7 @@ button { font: inherit; color: inherit; }
 .btn--primary {
   background: var(--grad);
   color: var(--accent-ink);
-  box-shadow: 0 8px 24px -12px rgba(4, 60, 42, 0.35);
+  box-shadow: 0 8px 24px -12px hsl(0 0% 0% / 0.35);
 }
 .btn--primary:hover:not(:disabled) { background: var(--grad-hover); }
 .btn--ghost {
@@ -191,8 +296,8 @@ button { font: inherit; color: inherit; }
 .btn--sm { min-height: 38px; padding: 8px 14px; font-size: 0.88rem; }
 .btn--lg { min-height: 50px; padding: 13px 24px; font-size: 1rem; }
 .btn--block { width: 100%; }
-.btn--danger { color: var(--danger); border-color: rgba(248, 113, 113, 0.35); }
-.btn--danger:hover { background: rgba(248, 113, 113, 0.12); }
+.btn--danger { color: var(--danger); border-color: hsl(0 0% 100% / 0.35); }
+.btn--danger:hover { background: hsl(0 0% 100% / 0.12); }
 
 .icon-btn {
   display: inline-flex; align-items: center; justify-content: center;
@@ -237,17 +342,17 @@ button { font: inherit; color: inherit; }
   transition: border-color var(--t-fast), box-shadow var(--t-fast), background var(--t-fast);
 }
 .input::placeholder { color: var(--text-3); }
-.input:hover { border-color: rgba(11, 31, 25, 0.3); }
+.input:hover { border-color: hsl(0 0% 100% / 0.3); }
 .input:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.18);
+  box-shadow: 0 0 0 3px hsl(0 0% 100% / 0.18);
 }
 .input[aria-invalid="true"] { border-color: var(--danger); }
-.input[aria-invalid="true"]:focus { box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.18); }
+.input[aria-invalid="true"]:focus { box-shadow: 0 0 0 3px hsl(0 0% 100% / 0.18); }
 select.input {
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23aecdbd' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='m5 9 7 7 7-7'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23c9c9c9' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='m5 9 7 7 7-7'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 14px center;
   padding-right: 38px;
@@ -264,7 +369,7 @@ select.input option { background: var(--surface-2); color: var(--text); }
   color: var(--text-3); cursor: pointer;
   transition: color var(--t-fast), background var(--t-fast);
 }
-.input-btn:hover { color: var(--text); background: rgba(11, 31, 25, 0.05); }
+.input-btn:hover { color: var(--text); background: hsl(0 0% 100% / 0.08); }
 
 .field__error {
   display: flex; align-items: center; gap: 6px;
@@ -272,7 +377,7 @@ select.input option { background: var(--surface-2); color: var(--text); }
   font-size: var(--fs-sm); font-weight: 600;
   color: var(--danger);
 }
-.field__error::before { content: "!"; display: inline-grid; place-items: center; width: 15px; height: 15px; border-radius: 50%; background: rgba(248,113,113,.2); font-size: 11px; flex: none; }
+.field__error::before { content: "!"; display: inline-grid; place-items: center; width: 15px; height: 15px; border-radius: 50%; background: hsl(0 0% 100% / 0.18); font-size: 11px; flex: none; }
 .field__hint { margin-top: 6px; font-size: var(--fs-xs); color: var(--text-3); }
 
 .check {
@@ -303,8 +408,8 @@ select.input option { background: var(--surface-2); color: var(--text); }
 .chip:active { transform: scale(0.97); }
 .chip input { position: absolute; opacity: 0; pointer-events: none; }
 .chip:has(input:checked) {
-  background: rgba(52, 211, 153, 0.14);
-  border-color: rgba(52, 211, 153, 0.55);
+  background: hsl(0 0% 100% / 0.14);
+  border-color: hsl(0 0% 100% / 0.55);
   color: var(--accent);
 }
 .chip:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -347,23 +452,23 @@ select.input option { background: var(--surface-2); color: var(--text); }
 }
 .badge--demo {
   color: var(--accent-2);
-  background: rgba(34, 211, 238, 0.1);
-  border: 1px dashed rgba(34, 211, 238, 0.5);
+  background: hsl(0 0% 100% / 0.1);
+  border: 1px dashed hsl(0 0% 100% / 0.5);
 }
 /* Same badge, opposite meaning: solid and undashed, because the value beside it
    is a real reading rather than a placeholder. */
 .badge--live {
   color: var(--aqi-1-ink);
-  background: rgba(52, 211, 153, 0.12);
-  border: 1px solid rgba(52, 211, 153, 0.45);
+  background: hsl(0 0% 100% / 0.12);
+  border: 1px solid hsl(0 0% 100% / 0.45);
 }
 /* A reading exists but is not current, there is none at all, or none has been
    asked for yet. Muted on purpose: it must read as neither "live" nor "demo". */
 .badge--stale,
 .badge--loading {
   color: var(--aqi-2-ink);
-  background: rgba(148, 163, 184, 0.14);
-  border: 1px solid rgba(148, 163, 184, 0.5);
+  background: hsl(0 0% 100% / 0.14);
+  border: 1px solid hsl(0 0% 100% / 0.5);
 }
 .ribbon {
   display: inline-flex; align-items: center; gap: 7px;
@@ -373,13 +478,15 @@ select.input option { background: var(--surface-2); color: var(--text); }
   border: 1px solid;
 }
 .ribbon::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
-.ribbon--good, .ribbon--1 { color: var(--aqi-1-ink); background: rgba(52, 211, 153, 0.1); border-color: rgba(52, 211, 153, 0.4); }
-.ribbon--2 { color: var(--aqi-2-ink); background: rgba(250, 204, 21, 0.09); border-color: rgba(250, 204, 21, 0.38); }
-.ribbon--3 { color: var(--aqi-3-ink); background: rgba(251, 146, 60, 0.1); border-color: rgba(251, 146, 60, 0.4); }
-.ribbon--4 { color: var(--aqi-4-ink); background: rgba(248, 113, 113, 0.1); border-color: rgba(248, 113, 113, 0.4); }
+/* The band shows in the border, stepped by the brightness ramp: Good is the
+   dimmest edge, Very unhealthy the brightest. The words carry the meaning. */
+.ribbon--good, .ribbon--1 { color: var(--aqi-1-ink); background: hsl(0 0% 100% / 0.1); border-color: var(--aqi-1); }
+.ribbon--2 { color: var(--aqi-2-ink); background: hsl(0 0% 100% / 0.09); border-color: var(--aqi-2); }
+.ribbon--3 { color: var(--aqi-3-ink); background: hsl(0 0% 100% / 0.1); border-color: var(--aqi-3); }
+.ribbon--4 { color: var(--aqi-4-ink); background: hsl(0 0% 100% / 0.1); border-color: var(--aqi-4); }
 /* "We have no reading" — deliberately not one of the five AQI colours, so an
    absent reading cannot be mistaken for a band. */
-.ribbon--none { color: var(--text-3); background: rgba(148, 163, 184, 0.12); border-color: rgba(148, 163, 184, 0.4); }
+.ribbon--none { color: var(--text-3); background: hsl(0 0% 100% / 0.12); border-color: hsl(0 0% 100% / 0.4); }
 .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; flex: none; }
 .dot--1 { background: var(--aqi-1); } .dot--2 { background: var(--aqi-2); }
 .dot--3 { background: var(--aqi-3); } .dot--4 { background: var(--aqi-4); }
@@ -389,7 +496,7 @@ select.input option { background: var(--surface-2); color: var(--text); }
   display: inline-flex; padding: 3px 10px; border-radius: var(--r-pill);
   font-size: var(--fs-xs); font-weight: 700;
 }
-.pill--ok { color: var(--ok); background: rgba(52, 211, 153, 0.12); border: 1px solid rgba(52, 211, 153, 0.4); }
+.pill--ok { color: var(--ok); background: hsl(0 0% 100% / 0.12); border: 1px solid hsl(0 0% 100% / 0.4); }
 
 /* source/timestamp line — appears wherever data appears */
 .src-line {
@@ -402,8 +509,8 @@ select.input option { background: var(--surface-2); color: var(--text); }
 .notice {
   display: flex; gap: 12px; align-items: flex-start;
   padding: var(--sp-4);
-  background: rgba(34, 211, 238, 0.07);
-  border: 1px solid rgba(34, 211, 238, 0.25);
+  background: hsl(0 0% 100% / 0.07);
+  border: 1px solid hsl(0 0% 100% / 0.25);
   border-radius: var(--r-md);
 }
 .notice .icon { color: var(--accent-2); margin-top: 2px; }
@@ -424,13 +531,13 @@ select.input option { background: var(--surface-2); color: var(--text); }
 .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); min-width: 0; }
 .brand__mark { width: 34px; height: 34px; flex: none; }
 .brand__name { font-weight: 800; font-size: 1.06rem; letter-spacing: -0.02em; }
-.brand__name em { font-style: normal; color: var(--accent); }
+.brand__name em { font-family: var(--font-em); font-style: italic; font-weight: 400; color: var(--text-2); }
 
 /* ---------- splash: initial load only, then removed by app.js ---------- */
 .splash {
   position: fixed; inset: 0; z-index: 200;
   display: grid; place-items: center;
-  background: linear-gradient(180deg, #ffffff, #f1f5f3);
+  background: linear-gradient(180deg, hsl(0 0% 8%), hsl(0 0% 5%));
   transition: opacity 400ms ease;
 }
 .splash.is-leaving { opacity: 0; pointer-events: none; }
@@ -438,18 +545,18 @@ select.input option { background: var(--surface-2); color: var(--text); }
 .splash__ring { position: relative; display: grid; place-items: center; width: 88px; height: 88px; }
 .splash__ring::before {
   content: ""; position: absolute; inset: 0; border-radius: 50%;
-  background: conic-gradient(from 0deg, rgba(52, 211, 153, 0) 0deg, rgba(52, 211, 153, 0) 240deg, #34d399 320deg, #22d3ee 360deg);
+  background: conic-gradient(from 0deg, hsl(0 0% 100% / 0) 0deg, hsl(0 0% 100% / 0) 240deg, hsl(0 0% 100%) 320deg, hsl(0 0% 74%) 360deg);
   -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3.5px), #000 calc(100% - 2.5px));
   mask: radial-gradient(farthest-side, transparent calc(100% - 3.5px), #000 calc(100% - 2.5px));
   animation: splash-spin 1.15s linear infinite;
 }
 .splash__mark { width: 46px; height: 46px; }
-.splash__name { font-size: 1.05rem; font-weight: 800; letter-spacing: -0.02em; color: #0b1f19; }
-.splash__name em { font-style: normal; color: #047857; } /* darker emerald: 4.5:1+ on the light splash */
+.splash__name { font-size: 1.05rem; font-weight: 800; letter-spacing: -0.02em; color: hsl(0 0% 100%); }
+.splash__name em { font-family: var(--font-em); font-style: italic; font-weight: 400; color: hsl(0 0% 88%); } /* serif accent */
 .splash__dots { display: inline-flex; gap: 6px; }
 .splash__dots i {
   width: 6px; height: 6px; border-radius: 50%;
-  background: #8fb3a3;
+  background: hsl(0 0% 62%);
   animation: splash-dot 1.2s ease-in-out infinite;
 }
 .splash__dots i:nth-child(2) { animation-delay: 0.15s; }
@@ -460,11 +567,10 @@ select.input option { background: var(--surface-2); color: var(--text); }
 /* ==========================================================================
    Landing
    ========================================================================== */
+/* Sticky bar holds position only; the glass itself comes from
+   .liquid-glass-strong in the markup, so the two can be tuned independently. */
 .topbar {
   position: sticky; top: 0; z-index: 40;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(16px) saturate(150%);
-  -webkit-backdrop-filter: blur(16px) saturate(150%);
   border-bottom: 1px solid var(--line);
 }
 .topbar__inner {
@@ -477,9 +583,11 @@ select.input option { background: var(--surface-2); color: var(--text); }
   color: var(--text-2); text-decoration: none; font-weight: 600; font-size: 0.9rem;
   padding: 8px 10px; border-radius: var(--r-sm);
 }
-.topbar__link:hover { color: var(--text); background: rgba(11, 31, 25, 0.05); }
+.topbar__link:hover { color: var(--text); background: hsl(0 0% 100% / 0.08); }
 
-.hero { padding: var(--sp-8) 0 var(--sp-9); }
+/* Top vignette rather than a wash: it deepens behind the header and the
+   headline, which is exactly where the white copy sits. */
+.hero { padding: var(--sp-8) 0 var(--sp-9); background: linear-gradient(180deg, hsl(0 0% 0% / 0.35) 0%, hsl(0 0% 0% / 0.12) 55%, transparent 100%); }
 .hero__inner {
   max-width: 1160px; margin: 0 auto;
   padding: 0 var(--content-x);
@@ -504,7 +612,7 @@ select.input option { background: var(--surface-2); color: var(--text); }
 .instrument::after {
   content: ""; position: absolute; inset: auto -30% -55% auto;
   width: 280px; height: 280px;
-  background: radial-gradient(circle, rgba(52, 211, 153, 0.14), transparent 65%);
+  background: radial-gradient(circle, hsl(0 0% 100% / 0.14), transparent 65%);
   pointer-events: none;
 }
 .instrument__head { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); margin-bottom: var(--sp-4); }
@@ -549,18 +657,26 @@ select.input option { background: var(--surface-2); color: var(--text); }
   border-radius: 50%;
   background: var(--text);
   border: 3px solid var(--bg);
-  box-shadow: 0 0 0 2px var(--text), 0 4px 10px rgba(11, 31, 25, 0.3);
+  box-shadow: 0 0 0 2px var(--text), 0 4px 10px hsl(0 0% 0% / 0.3);
 }
 .aqi-band__labels {
-  display: flex; justify-content: space-between;
+  position: relative;
+  height: 1rem;
   margin-top: 8px;
   font-size: 0.7rem; color: var(--text-3);
   font-variant-numeric: tabular-nums;
 }
+.aqi-band__labels span {
+  position: absolute;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+.aqi-band__labels span:first-child { transform: none; }
+.aqi-band__labels span:last-child { transform: translateX(-100%); }
 
 /* sections */
 .section { padding: var(--sp-9) 0; }
-.section--alt { background: var(--bg-alt); border-block: 1px solid var(--line); }
+.section--alt { background: hsl(0 0% 100% / 0.03); border-block: 1px solid var(--line); }
 .section__inner { max-width: 1160px; margin: 0 auto; padding: 0 var(--content-x); }
 .section h2 { font-size: clamp(1.35rem, 3.5vw, 1.8rem); font-weight: 800; margin-bottom: var(--sp-6); }
 
@@ -579,9 +695,9 @@ select.input option { background: var(--surface-2); color: var(--text); }
   position: relative;
   min-height: 190px;
   background:
-    repeating-linear-gradient(0deg, transparent 0 39px, rgba(11, 31, 25, 0.06) 39px 40px),
-    repeating-linear-gradient(90deg, transparent 0 39px, rgba(11, 31, 25, 0.06) 39px 40px),
-    radial-gradient(600px 300px at 30% 20%, rgba(8, 145, 178, 0.07), transparent 60%),
+    repeating-linear-gradient(0deg, transparent 0 39px, hsl(0 0% 100% / 0.07) 39px 40px),
+    repeating-linear-gradient(90deg, transparent 0 39px, hsl(0 0% 100% / 0.07) 39px 40px),
+    radial-gradient(600px 300px at 30% 20%, hsl(0 0% 100% / 0.07), transparent 60%),
     var(--surface-2);
   border-bottom: 1px solid var(--line);
 }
@@ -592,7 +708,7 @@ select.input option { background: var(--surface-2); color: var(--text); }
   display: inline-flex; align-items: center; gap: 5px;
   padding: 4px 9px 4px 6px;
   border-radius: var(--r-pill);
-  background: rgba(255, 255, 255, 0.92);
+  background: hsl(0 0% 12% / 0.94);
   border: 1px solid var(--line-strong);
   font-size: 0.72rem; font-weight: 800;
   font-variant-numeric: tabular-nums;
@@ -602,19 +718,19 @@ select.input option { background: var(--surface-2); color: var(--text); }
 .pin i { width: 8px; height: 8px; border-radius: 50%; }
 .pin--good i { background: var(--aqi-1); } .pin--mod i { background: var(--aqi-2); }
 .pin--usg i { background: var(--aqi-3); } .pin--bad i { background: var(--aqi-4); }
-.pin.is-selected { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.25), var(--shadow-1); }
+.pin.is-selected { border-color: var(--accent); box-shadow: 0 0 0 3px hsl(0 0% 100% / 0.25), var(--shadow-1); }
 .mini-map__me {
   position: absolute; left: 50%; top: 55%;
   width: 12px; height: 12px;
   transform: translate(-50%, -50%);
   border-radius: 50%;
-  background: var(--accent-2);
-  box-shadow: 0 0 0 4px rgba(34, 211, 238, 0.25);
+  background: hsl(0 0% 100%);
+  box-shadow: 0 0 0 4px hsl(0 0% 100% / 0.25);
 }
 .mini-map__me::after {
   content: ""; position: absolute; inset: -8px;
   border-radius: 50%;
-  border: 2px solid rgba(34, 211, 238, 0.5);
+  border: 2px solid hsl(0 0% 100% / 0.5);
   animation: pulse 2.4s ease-out infinite;
 }
 @keyframes pulse {
@@ -647,8 +763,8 @@ select.input option { background: var(--surface-2); color: var(--text); }
 }
 .mini-chat__bubble--me {
   align-self: flex-end;
-  background: rgba(52, 211, 153, 0.14);
-  border: 1px solid rgba(52, 211, 153, 0.35);
+  background: hsl(0 0% 100% / 0.14);
+  border: 1px solid hsl(0 0% 100% / 0.35);
   border-bottom-right-radius: 6px;
 }
 
@@ -672,8 +788,8 @@ select.input option { background: var(--surface-2); color: var(--text); }
   width: 34px; height: 34px;
   margin-bottom: var(--sp-3);
   border-radius: 50%;
-  background: rgba(52, 211, 153, 0.13);
-  border: 1px solid rgba(52, 211, 153, 0.45);
+  background: hsl(0 0% 100% / 0.13);
+  border: 1px solid hsl(0 0% 100% / 0.45);
   color: var(--accent);
   font-weight: 800;
 }
@@ -684,13 +800,13 @@ select.input option { background: var(--surface-2); color: var(--text); }
 .cta-band__inner {
   display: flex; flex-direction: column; gap: var(--sp-5);
   padding: var(--sp-7);
-  background: linear-gradient(135deg, rgba(52, 211, 153, 0.1), rgba(34, 211, 238, 0.07));
+  background: linear-gradient(135deg, hsl(0 0% 100% / 0.1), hsl(0 0% 100% / 0.07));
   border: 1px solid var(--line-strong);
   border-radius: var(--r-xl);
 }
 .cta-band__inner p { color: var(--text-2); margin-top: 6px; }
 .cta-band__actions { display: flex; flex-wrap: wrap; gap: var(--sp-3); }
-.footer { border-top: 1px solid var(--line); padding: var(--sp-7) 0 var(--sp-8); background: var(--bg-alt); }
+.footer { border-top: 1px solid var(--line); padding: var(--sp-7) 0 var(--sp-8); background: hsl(0 0% 100% / 0.04); }
 .footer__inner { display: grid; gap: var(--sp-5); }
 .footer__brand p { color: var(--text-3); font-size: var(--fs-sm); margin-top: 4px; }
 .footer__links { display: flex; flex-wrap: wrap; gap: var(--sp-4); }
@@ -750,7 +866,7 @@ select.input option { background: var(--surface-2); color: var(--text); }
 .otp-box:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.18);
+  box-shadow: 0 0 0 3px hsl(0 0% 100% / 0.18);
 }
 .otp-actions { margin-bottom: var(--sp-4); }
 .otp-countdown {
@@ -775,21 +891,26 @@ select.input option { background: var(--surface-2); color: var(--text); }
 
 .screen--app { animation: fade-rise 240ms cubic-bezier(0.2, 0.7, 0.3, 1); }
 
+/* Floating glass pill rather than a full-bleed bar: the 12px lift lets the
+   background read through underneath it, which is the whole point of the layer. */
 .tabbar {
-  position: fixed; inset: auto 0 0 0; z-index: 50;
+  position: fixed; z-index: 50;
+  left: 12px; right: 12px;
+  bottom: calc(12px + env(safe-area-inset-bottom));
   display: flex;
-  height: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
-  padding-bottom: env(safe-area-inset-bottom);
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(18px) saturate(160%);
-  -webkit-backdrop-filter: blur(18px) saturate(160%);
-  border-top: 1px solid var(--line-strong);
+  height: var(--tabbar-h);
+  border-radius: var(--r-pill);
+  border-top: 0;
+  /* leave room inside the pill for the items to breathe */
+  padding: 4px;
 }
 .tabbar__item {
   flex: 1;
   min-width: 0;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
-  min-height: var(--tabbar-h);
+  /* the pill's own height and padding set the box; a min-height here would push
+     the items past the rounded edge they are supposed to sit inside */
+  min-height: 0;
   padding: 6px 2px;
   background: none; border: 0;
   color: var(--text-3);
@@ -834,7 +955,7 @@ select.input option { background: var(--surface-2); color: var(--text); }
 .aqi-hero::after {
   content: ""; position: absolute; inset: -40% -20% auto auto;
   width: 320px; height: 320px;
-  background: radial-gradient(circle, rgba(250, 204, 21, 0.08), transparent 65%);
+  background: radial-gradient(circle, hsl(0 0% 100% / 0.08), transparent 65%);
   pointer-events: none;
 }
 .aqi-hero__top { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); margin-bottom: var(--sp-4); }
@@ -859,14 +980,14 @@ select.input option { background: var(--surface-2); color: var(--text); }
   width: 36px; height: 36px;
   margin-bottom: 6px;
   border-radius: var(--r-sm);
-  background: rgba(52, 211, 153, 0.11);
+  background: hsl(0 0% 100% / 0.11);
   color: var(--accent);
 }
 .stat__val { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
 .stat__val small { font-size: 0.72rem; font-weight: 600; color: var(--text-3); }
 .stat__label { font-size: var(--fs-xs); color: var(--text-3); }
 .stat__delta { font-size: var(--fs-xs); font-weight: 700; margin-top: 4px; }
-.stat__delta em { font-style: normal; color: var(--text-3); font-weight: 600; }
+.stat__delta em { font-family: var(--font); font-style: normal; color: var(--text-3); font-weight: 600; }
 .stat__delta--up { color: var(--aqi-3-ink); }
 .stat__delta--down { color: var(--aqi-1-ink); }
 .stat--sm { text-align: center; align-items: center; }
@@ -889,7 +1010,7 @@ select.input option { background: var(--surface-2); color: var(--text); }
   width: 34px; height: 34px;
   margin-bottom: 4px;
   border-radius: var(--r-sm);
-  background: rgba(34, 211, 238, 0.1);
+  background: hsl(0 0% 100% / 0.1);
   color: var(--accent-2);
 }
 .quick__label { font-weight: 700; font-size: 0.86rem; }
@@ -906,7 +1027,7 @@ select.input option { background: var(--surface-2); color: var(--text); }
 /* ---------- charts ---------- */
 .chart { width: 100%; }
 .chart svg { display: block; width: 100%; height: auto; }
-.chart__grid { stroke: rgba(11, 31, 25, 0.08); stroke-width: 1; }
+.chart__grid { stroke: hsl(0 0% 100% / 0.1); stroke-width: 1; }
 .chart__area { fill: url(#chartGrad); }
 .chart__line { fill: none; stroke: var(--accent); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 .chart__dot { fill: var(--text); stroke: var(--accent); stroke-width: 2.5; }
@@ -958,21 +1079,28 @@ select.input option { background: var(--surface-2); color: var(--text); }
   z-index: 0;
 }
 .map__canvas .leaflet-container { font: inherit; background: var(--surface-2); }
+/* Leaflet's own stylesheet ships white control chrome; override it or the zoom
+   buttons and attribution sit as white blocks on a dark map frame. */
 .map__canvas .leaflet-control-attribution {
   font-size: 10px;
-  background: rgba(255, 255, 255, 0.86);
-  color: var(--text-3);
+  background: hsl(0 0% 8% / 0.85);
+  color: hsl(0 0% 100% / 0.62);
 }
-.map__canvas .leaflet-control-attribution a { color: var(--text-2); }
+.map__canvas .leaflet-control-attribution a { color: hsl(0 0% 100% / 0.8); }
 .map__canvas .leaflet-bar a {
+  background: hsl(0 0% 12% / 0.94);
   color: var(--text);
   border-bottom-color: var(--line);
 }
-.map__canvas .leaflet-bar a:hover { background: var(--surface-2); color: var(--accent); }
+.map__canvas .leaflet-bar a:hover { background: var(--surface-3); color: var(--accent); }
 .map__canvas .leaflet-popup-content-wrapper {
+  background: hsl(0 0% 14% / 0.97);
+  color: var(--text);
+  border: 1px solid var(--line);
   border-radius: var(--r-md);
   box-shadow: var(--shadow-2);
 }
+.map__canvas .leaflet-popup-tip { background: hsl(0 0% 14% / 0.97); border: 1px solid var(--line); }
 .map__canvas .leaflet-popup-content { margin: 10px 12px; font-size: var(--fs-sm); }
 
 /* One pin per sampled point. The number is inside the dot because a haze map that
@@ -983,11 +1111,11 @@ select.input option { background: var(--surface-2); color: var(--text); }
   width: 34px; height: 34px;
   border-radius: 50%;
   border: 2px solid var(--surface);
-  box-shadow: 0 1px 4px rgba(11, 31, 25, 0.35);
+  box-shadow: 0 1px 4px hsl(0 0% 0% / 0.35);
   font-size: 0.72rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  color: #fff;
+  color: var(--aqi-on-fill);
   cursor: pointer;
   transition: transform 0.12s ease;
 }
@@ -996,9 +1124,10 @@ select.input option { background: var(--surface-2); color: var(--text); }
 .aqi-pin--3 { background: var(--aqi-3); } .aqi-pin--4 { background: var(--aqi-4); }
 .aqi-pin--5 { background: var(--aqi-5); }
 /* The centre gets a ring so "here" is findable among its own neighbours, which
-   on a coarse grid often share its value. */
-.aqi-pin--centre { border-color: var(--text); box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.85), var(--shadow-1); }
-.aqi-pin.is-selected { transform: scale(1.18); box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.9), var(--shadow-2); }
+   on a coarse grid often share its value. Dark halo, not white: the pins sit on
+   light OSM tiles where a white ring would vanish. */
+.aqi-pin--centre { box-shadow: 0 0 0 3px hsl(0 0% 6%), var(--shadow-1); }
+.aqi-pin.is-selected { transform: scale(1.18); box-shadow: 0 0 0 4px hsl(0 0% 6% / 0.85), var(--shadow-2); }
 
 .map__state {
   position: absolute; inset: 0;
@@ -1006,8 +1135,7 @@ select.input option { background: var(--surface-2); color: var(--text); }
   gap: 10px;
   padding: var(--sp-6);
   text-align: center;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(6px);
+  border-radius: var(--r-xl);
   z-index: 2;
 }
 .map__state h2 { font-size: 1.05rem; }
@@ -1016,11 +1144,11 @@ select.input option { background: var(--surface-2); color: var(--text); }
   display: inline-grid; place-items: center;
   width: 48px; height: 48px;
   border-radius: 50%;
-  background: rgba(52, 211, 153, 0.12);
-  border: 1px solid rgba(52, 211, 153, 0.4);
+  background: hsl(0 0% 100% / 0.12);
+  border: 1px solid hsl(0 0% 100% / 0.4);
   color: var(--accent);
 }
-.map__state-icon--warn { background: rgba(250, 204, 21, 0.12); border-color: rgba(161, 98, 7, 0.45); color: var(--aqi-2-ink); }
+.map__state-icon--warn { background: hsl(0 0% 100% / 0.12); border-color: hsl(0 0% 100% / 0.45); color: var(--aqi-2-ink); }
 .map__state-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 4px; }
 
 .legend {
@@ -1090,8 +1218,6 @@ select.input option { background: var(--surface-2); color: var(--text); }
 .chat-head {
   display: flex; align-items: center; gap: var(--sp-3);
   padding: var(--sp-3) var(--sp-4);
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(12px);
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
   margin-bottom: var(--sp-3);
@@ -1100,8 +1226,8 @@ select.input option { background: var(--surface-2); color: var(--text); }
   display: inline-grid; place-items: center;
   width: 40px; height: 40px; flex: none;
   border-radius: 50%;
-  background: linear-gradient(135deg, rgba(52, 211, 153, 0.25), rgba(34, 211, 238, 0.25));
-  border: 1px solid rgba(52, 211, 153, 0.5);
+  background: hsl(0 0% 100% / 0.25);
+  border: 1px solid hsl(0 0% 100% / 0.5);
   color: var(--accent);
 }
 .chat-head__text { flex: 1; min-width: 0; }
@@ -1128,8 +1254,8 @@ select.input option { background: var(--surface-2); color: var(--text); }
   display: inline-grid; place-items: center;
   width: 54px; height: 54px;
   border-radius: 50%;
-  background: rgba(52, 211, 153, 0.1);
-  border: 1px solid rgba(52, 211, 153, 0.4);
+  background: hsl(0 0% 100% / 0.1);
+  border: 1px solid hsl(0 0% 100% / 0.4);
   color: var(--accent);
 }
 .chat-empty h2 { font-size: 1.1rem; }
@@ -1145,7 +1271,7 @@ select.input option { background: var(--surface-2); color: var(--text); }
 }
 .msg--user {
   align-self: flex-end;
-  background: linear-gradient(135deg, rgba(52, 211, 153, 0.9), rgba(34, 211, 238, 0.85));
+  background: linear-gradient(135deg, hsl(0 0% 100% / 0.9), hsl(0 0% 100% / 0.85));
   color: var(--accent-ink);
   font-weight: 600;
   border-bottom-right-radius: 6px;
@@ -1166,13 +1292,13 @@ select.input option { background: var(--surface-2); color: var(--text); }
 .msg--error {
   align-self: stretch;
   max-width: 100%;
-  background: rgba(248, 113, 113, 0.09);
-  border: 1px solid rgba(248, 113, 113, 0.4);
+  background: hsl(0 0% 100% / 0.09);
+  border: 1px solid hsl(0 0% 100% / 0.4);
   color: var(--text);
 }
 .msg--error .msg__retry {
   margin-top: 8px;
-  background: none; border: 1px solid rgba(248, 113, 113, 0.5);
+  background: none; border: 1px solid hsl(0 0% 100% / 0.5);
   color: var(--danger);
   border-radius: var(--r-pill);
   padding: 6px 14px;
@@ -1321,7 +1447,7 @@ select.input option { background: var(--surface-2); color: var(--text); }
   background: var(--text-2);
   transition: transform var(--t), background var(--t-fast);
 }
-.switch:checked { background: rgba(52, 211, 153, 0.3); border-color: rgba(52, 211, 153, 0.6); }
+.switch:checked { background: hsl(0 0% 100% / 0.3); border-color: hsl(0 0% 100% / 0.6); }
 .switch:checked::after { transform: translateX(18px); background: var(--accent); }
 
 /* ==========================================================================
@@ -1338,8 +1464,6 @@ select.input option { background: var(--surface-2); color: var(--text); }
 .toast {
   display: flex; align-items: flex-start; gap: 10px;
   padding: 12px 15px;
-  background: rgba(255, 255, 255, 0.97);
-  backdrop-filter: blur(12px);
   border: 1px solid var(--line-strong);
   border-radius: var(--r-md);
   box-shadow: var(--shadow-2);
@@ -1362,6 +1486,267 @@ select.input option { background: var(--surface-2); color: var(--text); }
   30% { opacity: 1; }
   to { left: var(--pos, 0%); opacity: 1; }
 }
+
+/* ==========================================================================
+   Enhancement pass — visual hierarchy, depth & purposeful motion
+   Isolated so it can be reviewed (and reverted) as one block.
+   ========================================================================== */
+:root {
+  /* muted text and the elevated-surface shadow, restated here because this block
+     was appended after the base one — edit BOTH blocks together, never one. */
+  --text-2: hsl(0 0% 100% / 0.78);
+  --text-3: hsl(0 0% 100% / 0.58);
+  --shadow-3: 0 4px 10px hsl(0 0% 0% / 0.45), 0 32px 64px -30px hsl(0 0% 0% / 0.6);
+  --ring: 0 0 0 4px hsl(0 0% 100% / 0.28);
+}
+
+/* Section eyebrows read as a quiet serif label — deliberately softer than the
+   Poppins headings they introduce. */
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--font-em);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 0.78rem;
+  text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--text-3);
+  margin-bottom: var(--sp-3);
+}
+.eyebrow::before { content: ""; width: 18px; height: 2px; border-radius: 2px; background: var(--accent-2); }
+
+/* Profile groups get a light tick so the screen reads as organised sections,
+   not one long uniform list. */
+.settings-group__title { position: relative; }
+.settings-group__title::before {
+  content: ""; position: absolute; left: -14px; top: 50%;
+  transform: translateY(-50%);
+  width: 4px; height: 16px; border-radius: 4px; background: var(--accent-2);
+}
+
+/* Alternating band: translucent on purpose. An opaque --bg-alt here would cut a
+   hard slab straight through the background layer behind the landing page. */
+.section--alt {
+  background: linear-gradient(180deg, hsl(0 0% 100% / 0.05), hsl(0 0% 100% / 0.015));
+}
+
+/* DEPTH — interactive cards lift off the page on hover */
+.bento__item, .quick__item, .preview, .stat, .steps__item {
+  transition: transform var(--t), box-shadow var(--t), background var(--t-fast), border-color var(--t-fast);
+}
+.bento__item:hover, .preview:hover { transform: translateY(-3px); box-shadow: var(--shadow-3); }
+.steps__item:hover { transform: translateY(-3px); box-shadow: var(--shadow-2); }
+.quick__item:hover, .stat:hover { transform: translateY(-2px); box-shadow: var(--shadow-1); }
+
+/* AQI hero used to carry a 3px brand bar along its top edge, and the bento cards
+   a coloured one each. The glass edge highlight now does both jobs (see the
+   .liquid-glass block): a bar and a lit ring fighting for the same few pixels
+   reads as noise, and they would both want ::before anyway. */
+
+/* buttons: clear, gentle hover feedback */
+.btn--primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 12px 28px -12px hsl(0 0% 0% / 0.45), var(--ring); }
+.btn--ghost:hover:not(:disabled), .btn--quiet:hover:not(:disabled) { transform: translateY(-1px); }
+
+/* keyboard focus gets a soft glow on top of the visible ring */
+:focus-visible { box-shadow: var(--ring); }
+
+/* chip: a quick pop the moment a choice is made */
+.chip:has(input:checked) { animation: chip-pop 260ms cubic-bezier(0.2, 0.7, 0.3, 1); }
+@keyframes chip-pop { 0% { transform: scale(0.97); } 55% { transform: scale(1.04); } 100% { transform: scale(1); } }
+
+/* staggered entrance — reinforces navigation without shouting.
+   Only runs while the screen is visible, so it re-plays on each visit. */
+.screen--app:not([hidden]) > *,
+.screen--page:not([hidden]) .bento > .bento__item,
+.screen--page:not([hidden]) .steps > .steps__item {
+  animation: rise 380ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.screen--app:not([hidden]) > *:nth-child(1) { animation-delay: 20ms; }
+.screen--app:not([hidden]) > *:nth-child(2) { animation-delay: 70ms; }
+.screen--app:not([hidden]) > *:nth-child(3) { animation-delay: 120ms; }
+.screen--app:not([hidden]) > *:nth-child(4) { animation-delay: 170ms; }
+.screen--app:not([hidden]) > *:nth-child(5) { animation-delay: 220ms; }
+.screen--app:not([hidden]) > *:nth-child(6) { animation-delay: 270ms; }
+.screen--page:not([hidden]) .bento > .bento__item:nth-child(1) { animation-delay: 40ms; }
+.screen--page:not([hidden]) .bento > .bento__item:nth-child(2) { animation-delay: 100ms; }
+.screen--page:not([hidden]) .bento > .bento__item:nth-child(3) { animation-delay: 160ms; }
+.screen--page:not([hidden]) .bento > .bento__item:nth-child(4) { animation-delay: 220ms; }
+.screen--page:not([hidden]) .steps > .steps__item:nth-child(1) { animation-delay: 40ms; }
+.screen--page:not([hidden]) .steps > .steps__item:nth-child(2) { animation-delay: 110ms; }
+.screen--page:not([hidden]) .steps > .steps__item:nth-child(3) { animation-delay: 180ms; }
+
+/* ==========================================================================
+   V3 — layered depth, ambient motion
+   Vanilla CSS, no external assets.
+   ========================================================================== */
+
+/* ---- ambient mist (fixed, animated, low alpha). Sits above .bg-stage (-2)
+   and below page content, so it tints the video rather than hiding it. ---- */
+body::before {
+  background:
+    radial-gradient(820px 520px at 88% -8%, hsl(0 0% 100% / 0.12), transparent 60%),
+    radial-gradient(760px 520px at -8% 8%, hsl(0 0% 100% / 0.14), transparent 55%),
+    radial-gradient(680px 480px at 48% 118%, hsl(0 0% 100% / 0.12), transparent 60%);
+}
+
+/* reusable drifting colour blobs */
+.aurora__blob {
+  position: absolute; border-radius: 50%; opacity: 0.3;
+  will-change: transform; pointer-events: none;
+}
+.aurora__blob--1 { width: 46vw; height: 46vw; left: -8vw; top: -12vw;
+  background: radial-gradient(circle at 30% 30%, hsl(0 0% 100% / 0.55), transparent 70%);
+  animation: drift1 26s ease-in-out infinite; }
+.aurora__blob--2 { width: 42vw; height: 42vw; right: -10vw; top: -6vw;
+  background: radial-gradient(circle at 60% 40%, hsl(0 0% 100% / 0.5), transparent 70%);
+  animation: drift2 32s ease-in-out infinite; }
+.aurora__blob--3 { width: 38vw; height: 38vw; left: 28vw; bottom: -18vw;
+  background: radial-gradient(circle at 50% 50%, hsl(0 0% 100% / 0.42), transparent 70%);
+  animation: drift3 38s ease-in-out infinite; }
+@keyframes drift1 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(4vw,3vw); } }
+@keyframes drift2 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(-5vw,4vw); } }
+@keyframes drift3 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(3vw,-4vw); } }
+
+/* ---- hero: layered, with an animated scene + drifting colour behind ---- */
+.hero { position: relative; overflow: hidden; }
+.hero__inner { position: relative; z-index: 1; }
+.cta__aurora {
+  position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none;
+}
+
+/* the AQI instrument floats gently above the scene */
+.instrument { animation: float-inst 7s ease-in-out infinite; }
+@keyframes float-inst { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+
+/* ---- CTA: gradient panel with moving colour ---- */
+.cta-band { position: relative; overflow: hidden; }
+.cta-band__inner { position: relative; z-index: 1; }
+.cta__aurora .aurora__blob--1 { background: radial-gradient(circle at 30% 30%, hsl(0 0% 100% / 0.5), transparent 70%); }
+.cta__aurora .aurora__blob--2 { background: radial-gradient(circle at 60% 40%, hsl(0 0% 100% / 0.5), transparent 70%); }
+
+/* ---- section accent hues: a varied palette, not one green ---- */
+#how .eyebrow { color: var(--sky); }
+#how .eyebrow::before { background: var(--sky); }
+#how .section__title { color: var(--sky); }
+#how .steps__num { background: var(--grad-sky); color: var(--accent-ink); border-color: transparent; }
+
+#screen-radar .page-head__greeting { color: var(--violet); }
+#screen-planner .page-head__greeting { color: var(--amber); }
+#screen-chat .page-head__greeting { color: var(--accent-2); }
+#screen-profile .page-head__greeting { color: var(--accent); }
+
+/* The four bento cards used to be told apart by coloured top bars; the glass
+   edge ring now supplies the top light for all of them, so only the heading
+   icons still step (accent → sky → violet → amber, i.e. four gray weights). */
+.bento__item { position: relative; overflow: hidden; }
+.bento__item:nth-child(1) h3 .icon { color: var(--accent); }
+.bento__item:nth-child(2) h3 .icon { color: var(--sky); }
+.bento__item:nth-child(3) h3 .icon { color: var(--violet); }
+.bento__item:nth-child(4) h3 .icon { color: var(--amber); }
+
+/* dashboard quick + stat icon tiles cycle through the palette. The gradients are
+   LIGHT faces (dark ink icons) while the cards underneath are dark. */
+.quick__icon { background: var(--grad); color: var(--accent-ink); }
+.quick__item:nth-child(2) .quick__icon { background: var(--grad-sky); }
+.quick__item:nth-child(3) .quick__icon { background: var(--grad-violet); }
+.quick__item:nth-child(4) .quick__icon { background: var(--grad-amber); }
+.stat__icon { background: var(--grad-amber); color: var(--accent-ink); }
+.stat:nth-child(2) .stat__icon { background: var(--grad-sky); }
+.stat:nth-child(3) .stat__icon { background: var(--grad-violet); }
+
+/* ---- layered depth: every card sits with a quiet resting shadow ---- */
+.card { box-shadow: var(--shadow-rest); }
+
+/* ---- a living glow on the landing wordmark ---- */
+.topbar .brand__mark { animation: brand-pulse 6s ease-in-out infinite; }
+@keyframes brand-pulse {
+  0%,100% { filter: drop-shadow(0 0 0 hsl(0 0% 100% / 0)); }
+  50% { filter: drop-shadow(0 6px 16px hsl(0 0% 100% / 0.35)); }
+}
+
+/* ==========================================================================
+   Liquid glass — two reusable surfaces
+   .liquid-glass          thin, quiet: card chrome, light overlays
+   .liquid-glass-strong   deep blur + lit edge: the panels that carry meaning
+
+   Anatomy of a glass surface, outermost inward:
+     1. a layered translucent background (radial light + linear wash) — this is
+        what gives the "frosted pane catching a light source" reading;
+     2. backdrop-filter — the blur that samples the video/mist behind;
+     3. inset highlights (1px top light, 1px bottom dark) — the bevel;
+     4. ::before — a masked gradient ring at the border box, bright at the top
+        left where the light comes from. pointer-events:none, so the edge
+        highlight can never intercept a click, a tap or a focus.
+   No conventional solid border and no radius override: each surface keeps the
+   radius its own component chose, so nothing can disagree with its children.
+   ========================================================================== */
+.liquid-glass,
+.liquid-glass-strong {
+  position: relative;                 /* anchors ::before; overridden below for bars */
+  border-color: transparent;
+  box-shadow:
+    var(--shadow-rest),
+    inset 0 1px 0 hsl(0 0% 100% / 0.18),
+    inset 0 -1px 0 hsl(0 0% 0% / 0.3);
+}
+.liquid-glass {
+  background:
+    radial-gradient(120% 90% at 10% -10%, hsl(0 0% 100% / 0.13), transparent 55%),
+    linear-gradient(160deg, hsl(0 0% 100% / 0.09), hsl(0 0% 100% / 0.04) 46%, hsl(0 0% 100% / 0.07));
+  backdrop-filter: blur(16px) saturate(140%) brightness(1.05);
+  -webkit-backdrop-filter: blur(16px) saturate(140%) brightness(1.05);
+}
+.liquid-glass::before,
+.liquid-glass-strong::before {
+  content: "";
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    152deg,
+    hsl(0 0% 100% / 0.62),
+    hsl(0 0% 100% / 0.2) 24%,
+    transparent 52%,
+    hsl(0 0% 100% / 0.3)
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+.liquid-glass-strong {
+  background:
+    radial-gradient(130% 100% at 8% -12%, hsl(0 0% 100% / 0.2), transparent 52%),
+    linear-gradient(160deg, hsl(0 0% 100% / 0.14), hsl(0 0% 100% / 0.07) 44%, hsl(0 0% 100% / 0.1));
+  backdrop-filter: blur(26px) saturate(150%) brightness(1.1);
+  -webkit-backdrop-filter: blur(26px) saturate(150%) brightness(1.1);
+  box-shadow:
+    var(--shadow-2),
+    inset 0 1px 0 hsl(0 0% 100% / 0.3),
+    inset 0 -1px 0 hsl(0 0% 0% / 0.35);
+}
+.liquid-glass-strong::before {
+  background: linear-gradient(
+    152deg,
+    hsl(0 0% 100% / 0.85),
+    hsl(0 0% 100% / 0.3) 22%,
+    transparent 50%,
+    hsl(0 0% 100% / 0.42)
+  );
+}
+/* without backdrop-filter the translucency would leave text over raw video,
+   so the surface falls back to the opaque step instead */
+@supports not ((backdrop-filter: blur(2px)) or (-webkit-backdrop-filter: blur(2px))) {
+  .liquid-glass,
+  .liquid-glass-strong { background: var(--surface); }
+}
+/* placement-sensitive surfaces keep their own position: the glass classes only
+   supply material, never layout. */
+.topbar.liquid-glass-strong,
+.sidenav.liquid-glass-strong { position: sticky; }
+.tabbar.liquid-glass-strong { position: fixed; }
+.map__state.liquid-glass-strong { position: absolute; inset: 0; }
 
 /* ==========================================================================
    Responsive
@@ -1405,7 +1790,6 @@ select.input option { background: var(--surface-2); color: var(--text); }
   .btn--icon { min-width: 44px; min-height: 44px; }
   .settings-row { padding: 15px 0; }
   .quick__item { padding: var(--sp-4); }
-  .tabbar__item { min-height: calc(var(--tabbar-h) + 6px); }
 }
 
 @media (min-width: 600px) {
@@ -1442,8 +1826,6 @@ select.input option { background: var(--surface-2); color: var(--text); }
     position: sticky; top: 0;
     height: 100dvh;
     padding: var(--sp-5) var(--sp-4);
-    background: rgba(255, 255, 255, 0.93);
-    backdrop-filter: blur(14px);
     border-right: 1px solid var(--line);
   }
   .sidenav__nav { display: flex; flex-direction: column; gap: 4px; }
@@ -1462,9 +1844,9 @@ select.input option { background: var(--surface-2); color: var(--text); }
   .sidenav__item:hover { background: var(--surface-2); color: var(--text); }
   .sidenav__item:active { transform: scale(0.98); }
   .sidenav__item.is-active {
-    background: rgba(52, 211, 153, 0.13);
+    background: hsl(0 0% 100% / 0.13);
     color: var(--accent);
-    box-shadow: inset 0 0 0 1px rgba(52, 211, 153, 0.35);
+    box-shadow: inset 0 0 0 1px hsl(0 0% 100% / 0.35);
   }
   .sidenav__item--sub { font-size: 0.87rem; font-weight: 600; color: var(--text-3); }
   .sidenav__rule { border: 0; border-top: 1px solid var(--line); margin: 6px 0; }
@@ -1515,8 +1897,14 @@ select.input option { background: var(--surface-2); color: var(--text); }
   .mini-map__me::after { display: none; }
 }
 @media (prefers-reduced-transparency: reduce) {
-  .topbar, .tabbar, .chat-head, .sidenav { background: #ffffff; backdrop-filter: none; -webkit-backdrop-filter: none; }
+  /* User asked for no translucency: glass surfaces fall back to the opaque
+     --surface so they stay legible without the blur behind them. */
+  .topbar, .tabbar, .chat-head, .sidenav, .toast, .liquid-glass, .liquid-glass-strong {
+    background: var(--surface);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
 }
 @media (prefers-contrast: more) {
-  :root { --line: rgba(11, 31, 25, 0.35); --line-strong: rgba(11, 31, 25, 0.55); --text-2: #24473a; --text-3: #3d5c4f; }
+  :root { --line: hsl(0 0% 100% / 0.45); --line-strong: hsl(0 0% 100% / 0.7); --text-2: hsl(0 0% 100% / 0.92); --text-3: hsl(0 0% 100% / 0.78); }
 }

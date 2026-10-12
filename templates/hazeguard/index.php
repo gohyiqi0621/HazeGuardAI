@@ -14,7 +14,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>HazeGuard AI — Understand the air. Plan smarter. Breathe better.</title>
   <meta name="description" content="HazeGuard AI helps you understand local haze and air quality, explore it on a map, and plan outdoor activities with AI help.">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2334d399'/%3E%3Cpath d='M6 13h13a3.5 3.5 0 1 0-3.5-3.5M6 18h16a3 3 0 1 1-3 3' fill='none' stroke='%2304140d' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23e8e8e8'/%3E%3Cpath d='M6 13h13a3.5 3.5 0 1 0-3.5-3.5M6 18h16a3 3 0 1 1-3 3' fill='none' stroke='%230a0a0a' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="<?= $base ?>/media/com_hazeguard/css/style.css">
   <!-- Leaflet 1.9.4, vendored (BSD-2-Clause, see assets/leaflet/LICENSE). The map is
        the only feature that needs it, so its CSS is deferred rather than blocking
@@ -23,6 +23,16 @@
   <noscript><link rel="stylesheet" href="<?= $base ?>/media/com_hazeguard/assets/leaflet/leaflet.css"></noscript>
 </head>
 <body data-kind="page" data-screen="landing">
+
+  <!-- Background stage: the decorative layer, one fixed negative-z box so video,
+       scrim and mist can never overlap page content or intercept pointer events.
+       The video only shows where the router wants it (body[data-kind]); see
+       .bg-stage in style.css for the stack order and every fallback. -->
+  <div class="bg-stage" aria-hidden="true">
+    <video class="bg-video" autoplay muted loop playsinline preload="auto"
+           src="<?= $base ?>/media/com_hazeguard/assets/video/haze-loop.mp4"></video>
+    <div class="bg-scrim"></div>
+  </div>
 
   <!-- Initial-load splash: light, brief, removed on window load; never shown during in-app navigation -->
   <div class="splash" id="splash" role="status" aria-label="Loading HazeGuard AI">
@@ -64,12 +74,12 @@
     <symbol id="i-sliders" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7.5h8M17 7.5h3M4 16.5h3M12 16.5h8"/><circle cx="14.5" cy="7.5" r="2.2"/><circle cx="9.5" cy="16.5" r="2.2"/></g></symbol>
     <symbol id="i-location-pin" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s6.5-6 6.5-11a6.5 6.5 0 1 0-13 0C5.5 15 12 21 12 21z"/><circle cx="12" cy="10" r="2.4"/></g></symbol>
     <symbol id="i-shield" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 5 6v6c0 4.4 3 7.4 7 8.5 4-1.1 7-4.1 7-8.5V6z"/><path d="m9.2 12 2 2 3.6-3.8"/></g></symbol>
-    <symbol id="brand-mark" viewBox="0 0 32 32"><rect width="32" height="32" rx="9" fill="url(#brandGrad)"/><path d="M7 13.5h12a3.2 3.2 0 1 0-3.2-3.2M7 18.5h14a2.8 2.8 0 1 1-2.8 2.8" fill="none" stroke="#04140d" stroke-width="2.2" stroke-linecap="round"/><defs><linearGradient id="brandGrad" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#34d399"/><stop offset="1" stop-color="#22d3ee"/></linearGradient></defs></symbol>
+    <symbol id="brand-mark" viewBox="0 0 32 32"><rect width="32" height="32" rx="9" fill="url(#brandGrad)"/><path d="M7 13.5h12a3.2 3.2 0 1 0-3.2-3.2M7 18.5h14a2.8 2.8 0 1 1-2.8 2.8" fill="none" stroke="#0a0a0a" stroke-width="2.2" stroke-linecap="round"/><defs><linearGradient id="brandGrad" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#ffffff"/><stop offset="1" stop-color="#9a9a9a"/></linearGradient></defs></symbol>
   </svg>
 
   <!-- ============================ LANDING ============================ -->
   <div class="screen screen--page" id="screen-landing">
-    <header class="topbar">
+    <header class="topbar liquid-glass-strong">
       <div class="topbar__inner">
         <a class="brand" href="#landing" data-go="landing" aria-label="HazeGuard AI home">
           <svg class="brand__mark" viewBox="0 0 32 32" aria-hidden="true"><use href="#brand-mark"/></svg>
@@ -88,7 +98,7 @@
       <div class="hero__inner">
         <div class="hero__copy">
           <h1 class="display">Understand the air.<br>Plan smarter.<br><span class="display__accent">Breathe better.</span></h1>
-          <p class="hero__sub">HazeGuard AI turns local air-quality data into one clear answer: <strong>is the air fine for what you want to do today?</strong> Check your surroundings, explore the haze map, and let the AI assistant explain the rest.</p>
+          <p class="hero__sub">HazeGuard AI turns local air-quality data into one simple answer: <strong>is today's air okay for what you want to do?</strong> Check your area, explore the haze map, and let BreatheBuddy explain the rest.</p>
           <div class="hero__cta">
             <a href="#register" data-go="register" class="btn btn--primary btn--lg">Create free account <svg class="icon" aria-hidden="true"><use href="#i-arrow-right"/></svg></a>
             <a href="#login" data-go="login" class="btn btn--ghost btn--lg">Sign in</a>
@@ -100,7 +110,7 @@
              well as the no-JS state: no place is named and no number is shown
              until the server answers, because a hardcoded city is how a Johor
              Bahru visitor gets told "Kuala Lumpur" first. -->
-        <figure class="instrument card" aria-labelledby="instrument-caption">
+        <figure class="instrument card liquid-glass-strong" aria-labelledby="instrument-caption">
           <figcaption class="instrument__head" id="instrument-caption">
             <span class="instrument__place"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-location-pin"/></svg> <span data-aqi-place>—</span></span>
             <span class="badge badge--loading" data-aqi-badge>Checking…</span>
@@ -115,6 +125,7 @@
           <div class="aqi-band" data-aqi-band role="img" aria-label="Air quality index not yet available">
             <div class="aqi-band__track"><span class="aqi-band__seg aqi-band__seg--1"></span><span class="aqi-band__seg aqi-band__seg--2"></span><span class="aqi-band__seg aqi-band__seg--3"></span><span class="aqi-band__seg aqi-band__seg--4"></span><span class="aqi-band__seg aqi-band__seg--5"></span></div>
             <span class="aqi-band__marker" data-aqi-marker style="--pos:0%; display:none"></span>
+            <div class="aqi-band__labels" aria-hidden="true"><span style="left:0%">0</span><span style="left:16.67%">50</span><span style="left:33.33%">100</span><span style="left:50%">150</span><span style="left:66.67%">200</span><span style="left:100%">300</span></div>
           </div>
           <div class="instrument__split">
             <div class="instrument__stat"><span class="instrument__stat-val"><span data-aqi-pm25>—</span> <small>µg/m³</small></span><span class="instrument__stat-label">PM2.5</span></div>
@@ -128,10 +139,11 @@
 
     <section class="section" id="features" aria-labelledby="features-title">
       <div class="section__inner">
-        <h2 id="features-title">What HazeGuard does</h2>
+        <p class="eyebrow">Features</p>
+        <h2 id="features-title">What you get</h2>
         <div class="bento">
           <!-- Radar preview -->
-          <article class="bento__item bento__item--map card">
+          <article class="bento__item bento__item--map card liquid-glass">
             <div class="mini-map" aria-hidden="true">
               <span class="mini-map__grid"></span>
               <span class="pin pin--good" style="--x:22%;--y:34%"><i></i>48</span>
@@ -147,7 +159,7 @@
             </div>
           </article>
           <!-- Planner preview -->
-          <article class="bento__item card">
+          <article class="bento__item card liquid-glass">
             <div class="bento__body">
               <h3><svg class="icon" aria-hidden="true"><use href="#i-planner"/></svg> AI Activity Planner</h3>
               <p>Tell it what you want to do, where and when. You get a plain-language verdict with the reasoning, plus an indoor fallback for bad-air days.</p>
@@ -159,7 +171,7 @@
             </div>
           </article>
           <!-- BreatheBuddy preview -->
-          <article class="bento__item card">
+          <article class="bento__item card liquid-glass">
             <div class="bento__body">
               <h3><svg class="icon" aria-hidden="true"><use href="#i-chat"/></svg> BreatheBuddy AI</h3>
               <p>Ask anything about the air in your own words. BreatheBuddy answers from real air-quality tool calls, and says so when data is missing.</p>
@@ -171,7 +183,7 @@
             </div>
           </article>
           <!-- Honest data strip -->
-          <article class="bento__item bento__item--wide card">
+          <article class="bento__item bento__item--wide card liquid-glass">
             <div class="bento__body bento__body--row">
               <div>
                 <h3><svg class="icon" aria-hidden="true"><use href="#i-air"/></svg> Honest data, clearly labelled</h3>
@@ -192,19 +204,20 @@
 
     <section class="section section--alt" id="how" aria-labelledby="how-title">
       <div class="section__inner">
+        <p class="eyebrow">Get started</p>
         <h2 id="how-title">How it works</h2>
         <ol class="steps">
-          <li class="steps__item">
+          <li class="steps__item liquid-glass">
             <span class="steps__num" aria-hidden="true">1</span>
             <h3>Check your air</h3>
             <p>Tap “Use my location” and see AQI, PM2.5 and PM10 for where you are, with source and timestamp attached.</p>
           </li>
-          <li class="steps__item">
+          <li class="steps__item liquid-glass">
             <span class="steps__num" aria-hidden="true">2</span>
             <h3>See it on the map</h3>
             <p>Open Haze Radar to compare areas, find cleaner routes and inspect individual readings.</p>
           </li>
-          <li class="steps__item">
+          <li class="steps__item liquid-glass">
             <span class="steps__num" aria-hidden="true">3</span>
             <h3>Plan with AI</h3>
             <p>Ask BreatheBuddy or generate an activity plan. Recommendations cite the data they used, never invented readings.</p>
@@ -214,7 +227,11 @@
     </section>
 
     <section class="section cta-band" aria-labelledby="cta-title">
-      <div class="section__inner cta-band__inner">
+      <div class="cta__aurora" aria-hidden="true">
+        <span class="aurora__blob aurora__blob--1"></span>
+        <span class="aurora__blob aurora__blob--2"></span>
+      </div>
+      <div class="section__inner cta-band__inner liquid-glass-strong">
         <div>
           <h2 id="cta-title">Ready to check your air?</h2>
           <p>Create an account to save plans and preferences, or sign in to continue.</p>
@@ -250,7 +267,7 @@
         <svg class="brand__mark" viewBox="0 0 32 32" aria-hidden="true"><use href="#brand-mark"/></svg>
         <span class="brand__name">HazeGuard <em>AI</em></span>
       </a>
-      <div class="auth__card card">
+      <div class="auth__card card liquid-glass-strong">
         <h1 class="auth__title">Welcome back</h1>
         <p class="auth__sub">Sign in to your HazeGuard account.</p>
 
@@ -330,7 +347,7 @@
         </div>
 
         <p class="auth__switch">New to HazeGuard? <a class="link" href="#register" data-go="register">Create an account</a></p>
-        <p class="auth__note"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-info"/></svg> Signing in here creates a real session. The code is emailed, expires after 5 minutes and works once.</p>
+        <p class="auth__note"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-info"/></svg> Signing in opens a real session on this device. The code is emailed, expires after 5 minutes and works once.</p>
       </div>
     </div>
   </div>
@@ -341,7 +358,7 @@
         <svg class="brand__mark" viewBox="0 0 32 32" aria-hidden="true"><use href="#brand-mark"/></svg>
         <span class="brand__name">HazeGuard <em>AI</em></span>
       </a>
-      <div class="auth__card card">
+      <div class="auth__card card liquid-glass-strong">
         <h1 class="auth__title">Create your account</h1>
         <p class="auth__sub">Free forever. Your preferences stay private to you.</p>
 
@@ -381,7 +398,7 @@
         </form>
 
         <p class="auth__switch">Already have an account? <a class="link" href="#login" data-go="login">Sign in</a></p>
-        <p class="auth__note"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-info"/></svg> Creating an account here stores it. Passwords are hashed rather than kept in plain text, and the address has to be confirmed by an emailed code before the account becomes active.</p>
+        <p class="auth__note"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-info"/></svg> We store your account securely — passwords are hashed, not kept in plain text, and you confirm your email with a code before the account goes live.</p>
       </div>
     </div>
   </div>
@@ -392,7 +409,7 @@
         <svg class="brand__mark" viewBox="0 0 32 32" aria-hidden="true"><use href="#brand-mark"/></svg>
         <span class="brand__name">HazeGuard <em>AI</em></span>
       </a>
-      <div class="auth__card card">
+      <div class="auth__card card liquid-glass-strong">
         <span class="auth__icon" aria-hidden="true"><svg class="icon"><use href="#i-send"/></svg></span>
         <h1 class="auth__title">Verify your email</h1>
         <p class="auth__sub">We sent a 6-digit code to <strong id="otp-target">your inbox</strong>. Enter it below to activate your account.</p>
@@ -430,14 +447,14 @@
         <svg class="brand__mark" viewBox="0 0 32 32" aria-hidden="true"><use href="#brand-mark"/></svg>
         <span class="brand__name">HazeGuard <em>AI</em></span>
       </a>
-      <div class="auth__card card">
+      <div class="auth__card card liquid-glass-strong">
         <span class="auth__icon" id="verify-icon" aria-hidden="true"><svg class="icon"><use href="#i-check"/></svg></span>
         <h1 class="auth__title" id="verify-title">Email verified</h1>
         <p class="auth__sub" id="verify-text">Your account is active. You can sign in and start checking the air around you.</p>
         <div class="auth__actions" id="verify-actions">
           <a class="btn btn--primary btn--block" href="#login" data-go="login">Continue to sign in</a>
         </div>
-        <p class="auth__note"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-info"/></svg> The result above is the server's answer to the code you entered.</p>
+        <p class="auth__note"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-info"/></svg> This is the server's reply to the code you entered.</p>
       </div>
     </div>
   </div>
@@ -448,7 +465,7 @@
         <svg class="brand__mark" viewBox="0 0 32 32" aria-hidden="true"><use href="#brand-mark"/></svg>
         <span class="brand__name">HazeGuard <em>AI</em></span>
       </a>
-      <div class="auth__card card">
+      <div class="auth__card card liquid-glass-strong">
         <h1 class="auth__title">Reset your password</h1>
         <p class="auth__sub">Enter the email you registered with and we’ll send a 6-digit code.</p>
 
@@ -462,7 +479,7 @@
         </form>
 
         <p class="auth__switch"><a class="link" href="#login" data-go="login">Back to sign in</a></p>
-        <p class="auth__note"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-info"/></svg> This page answers the same way whether or not that address is registered, so it cannot be used to find out who has an account.</p>
+        <p class="auth__note"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-info"/></svg> This page replies the same way whether or not that email is registered, so no one can use it to check who has an account.</p>
       </div>
     </div>
   </div>
@@ -473,7 +490,7 @@
         <svg class="brand__mark" viewBox="0 0 32 32" aria-hidden="true"><use href="#brand-mark"/></svg>
         <span class="brand__name">HazeGuard <em>AI</em></span>
       </a>
-      <div class="auth__card card">
+      <div class="auth__card card liquid-glass-strong">
         <h1 class="auth__title">Choose a new password</h1>
         <p class="auth__sub">Enter the 6-digit code we sent to <strong id="reset-target">your inbox</strong>, then choose a password you don’t use anywhere else.</p>
 
@@ -512,7 +529,7 @@
         </form>
 
         <p class="auth__switch"><a class="link" href="#login" data-go="login">Back to sign in</a></p>
-        <p class="auth__note"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-info"/></svg> The code is hashed, works once and expires after 5 minutes. Changing your password here does not sign out sessions that are already open elsewhere.</p>
+        <p class="auth__note"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-info"/></svg> The code is hashed, works once and expires after 5 minutes. Changing your password won't sign you out on other devices.</p>
       </div>
     </div>
   </div>
@@ -520,7 +537,7 @@
   <!-- ============================ APP SHELL ============================ -->
   <div class="shell" id="shell" hidden>
     <!-- Desktop sidebar -->
-    <aside class="sidenav">
+    <aside class="sidenav liquid-glass-strong">
       <a class="brand brand--side" href="#landing" data-go="landing" aria-label="HazeGuard AI home">
         <svg class="brand__mark" viewBox="0 0 32 32" aria-hidden="true"><use href="#brand-mark"/></svg>
         <span class="brand__name">HazeGuard <em>AI</em></span>
@@ -560,7 +577,7 @@
           </header>
 
           <!-- AQI summary -->
-          <article class="card aqi-hero">
+          <article class="card liquid-glass-strong aqi-hero">
             <div class="aqi-hero__top">
               <span class="aqi-hero__place"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-location-pin"/></svg> <span data-aqi-place>—</span> · current conditions</span>
               <span class="badge badge--loading" data-aqi-badge>Checking…</span>
@@ -576,7 +593,7 @@
               <div class="aqi-band__track"><span class="aqi-band__seg aqi-band__seg--1"></span><span class="aqi-band__seg aqi-band__seg--2"></span><span class="aqi-band__seg aqi-band__seg--3"></span><span class="aqi-band__seg aqi-band__seg--4"></span><span class="aqi-band__seg aqi-band__seg--5"></span></div>
               <span class="aqi-band__marker" data-aqi-marker style="--pos:0%; display:none"></span>
             </div>
-            <div class="aqi-band__labels" aria-hidden="true"><span>0</span><span>50</span><span>100</span><span>150</span><span>300</span></div>
+            <div class="aqi-band__labels" aria-hidden="true"><span style="left:0%">0</span><span style="left:16.67%">50</span><span style="left:33.33%">100</span><span style="left:50%">150</span><span style="left:66.67%">200</span><span style="left:100%">300</span></div>
             <p class="src-line" data-aqi-src>Waiting for your location and the current reading.</p>
           </article>
 
@@ -584,12 +601,12 @@
                above uses, so they start as "—" rather than as a plausible
                number: a stand-in here would read as today's air. -->
           <div class="stat-grid">
-            <article class="card stat">
+            <article class="card liquid-glass stat">
               <span class="stat__icon" aria-hidden="true"><svg class="icon"><use href="#i-particles"/></svg></span>
               <span class="stat__val"><span data-aqi-pm25>—</span> <small>µg/m³</small></span>
               <span class="stat__label">PM2.5 · fine particulates</span>
             </article>
-            <article class="card stat">
+            <article class="card liquid-glass stat">
               <span class="stat__icon" aria-hidden="true"><svg class="icon"><use href="#i-air"/></svg></span>
               <span class="stat__val"><span data-aqi-pm10>—</span> <small>µg/m³</small></span>
               <span class="stat__label">PM10 · coarse particulates</span>
@@ -620,7 +637,7 @@
                  this card keeps its Demo label even though the radar itself is
                  live: a preview that borrows the real screen's status would be
                  showing invented numbers with a live badge. -->
-            <article class="card preview">
+            <article class="card liquid-glass-strong preview">
               <div class="mini-map mini-map--sm" aria-hidden="true">
                 <span class="mini-map__grid"></span>
                 <span class="pin pin--mod" style="--x:30%;--y:30%"><i></i>72</span>
@@ -636,7 +653,7 @@
             </article>
 
             <!-- AI recommendation preview -->
-            <article class="card preview">
+            <article class="card liquid-glass-strong preview">
               <div class="preview__body">
                 <h2 class="preview__title">Today’s AI recommendation</h2>
                 <div class="mini-verdict">
@@ -648,7 +665,7 @@
             </article>
 
             <!-- History chart -->
-            <article class="card preview preview--chart">
+            <article class="card liquid-glass-strong preview preview--chart">
               <div class="preview__head">
                 <h2 class="preview__title">Last 24 hours</h2>
                 <span class="badge badge--demo">Demo data</span>
@@ -693,12 +710,12 @@
             <div class="map__canvas" id="radar-canvas" role="application" aria-label="Map of air quality readings"></div>
 
             <!-- loading state -->
-            <div class="map__state" id="radar-loading" hidden>
+            <div class="map__state liquid-glass-strong" id="radar-loading" hidden>
               <span class="spinner" aria-hidden="true"></span>
               <p>Reading the air around here…</p>
             </div>
             <!-- permission denied state -->
-            <div class="map__state" id="radar-denied" hidden>
+            <div class="map__state liquid-glass-strong" id="radar-denied" hidden>
               <span class="map__state-icon map__state-icon--warn" aria-hidden="true"><svg class="icon"><use href="#i-alert"/></svg></span>
               <h2>Location permission blocked</h2>
               <p id="radar-denied-text">Your browser denied access — that’s fine. Search for a place instead, or allow location in your site settings and retry.</p>
@@ -708,7 +725,7 @@
               </div>
             </div>
             <!-- data unavailable state -->
-            <div class="map__state" id="radar-unavailable" hidden>
+            <div class="map__state liquid-glass-strong" id="radar-unavailable" hidden>
               <span class="map__state-icon" aria-hidden="true"><svg class="icon"><use href="#i-info"/></svg></span>
               <h2>No readings for that location</h2>
               <p id="radar-unavailable-text">We have no coverage there yet. Missing data is shown as missing, never as zero.</p>
@@ -730,7 +747,7 @@
                than letting nineteen dots imply street-level truth. -->
           <p class="src-line" id="radar-provenance" role="status" aria-live="polite"></p>
 
-          <article class="card location-panel" id="location-panel">
+          <article class="card liquid-glass location-panel" id="location-panel">
             <div class="location-panel__head">
               <h2 id="location-name"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-location-pin"/></svg> Kuala Lumpur</h2>
               <span class="badge" id="location-badge">Live</span>
@@ -749,11 +766,11 @@
           <header class="page-head">
             <div>
               <h1 class="page-head__greeting">AI Activity Planner</h1>
-              <p class="page-head__sub">Describe your plan and get a verdict with reasoning</p>
+              <p class="page-head__sub">Tell us your plan and get a clear yes-or-no with the reasons</p>
             </div>
           </header>
 
-          <form class="card form-card" id="form-planner" novalidate>
+          <form class="card liquid-glass form-card" id="form-planner" novalidate>
             <div class="form-grid">
               <div class="field">
                 <label for="plan-activity">Activity</label>
@@ -803,7 +820,7 @@
             <p>Checking air quality for your plan…</p>
           </div>
 
-          <article class="card plan-result" id="plan-result" hidden>
+          <article class="card liquid-glass plan-result" id="plan-result" hidden>
             <div class="plan-result__head">
               <h2>Your plan</h2>
               <span class="badge badge--demo">Demo recommendation</span>
@@ -824,11 +841,11 @@
 
         <!-- ---------------- Chat ---------------- -->
         <section class="screen screen--app screen--chat" id="screen-chat" hidden>
-          <header class="chat-head">
+          <header class="chat-head liquid-glass-strong">
             <span class="chat-head__avatar" aria-hidden="true"><svg class="icon"><use href="#i-sparkle"/></svg></span>
             <div class="chat-head__text">
               <h1>BreatheBuddy</h1>
-              <p>Prototype assistant · replies are canned demo responses, not a real model</p>
+              <p>Demo assistant — replies are sample messages, not a live model</p>
             </div>
             <span class="badge badge--demo">Demo</span>
           </header>
@@ -879,7 +896,7 @@
             </div>
           </div>
 
-          <article class="card history-chart-card">
+          <article class="card liquid-glass history-chart-card">
             <div class="preview__head">
               <h2 class="preview__title" id="history-title">US AQI · last 24 hours</h2>
               <span class="badge badge--demo">Demo data</span>
@@ -893,13 +910,13 @@
           </article>
 
           <div class="stat-grid stat-grid--4" id="history-summary">
-            <article class="card stat stat--sm"><span class="stat__val" id="h-avg">68</span><span class="stat__label">Average</span></article>
-            <article class="card stat stat--sm"><span class="stat__val" id="h-max">83</span><span class="stat__label">Peak</span></article>
-            <article class="card stat stat--sm"><span class="stat__val" id="h-min">54</span><span class="stat__label">Lowest</span></article>
-            <article class="card stat stat--sm"><span class="stat__val" id="h-good">18</span><span class="stat__label" id="h-good-label">Good hours</span></article>
+            <article class="card liquid-glass stat stat--sm"><span class="stat__val" id="h-avg">68</span><span class="stat__label">Average</span></article>
+            <article class="card liquid-glass stat stat--sm"><span class="stat__val" id="h-max">83</span><span class="stat__label">Peak</span></article>
+            <article class="card liquid-glass stat stat--sm"><span class="stat__val" id="h-min">54</span><span class="stat__label">Lowest</span></article>
+            <article class="card liquid-glass stat stat--sm"><span class="stat__val" id="h-good">18</span><span class="stat__label" id="h-good-label">Good hours</span></article>
           </div>
 
-          <article class="card notice">
+          <article class="card liquid-glass notice">
             <svg class="icon" aria-hidden="true"><use href="#i-info"/></svg>
             <div>
               <strong>Gaps are honest</strong>
@@ -912,12 +929,12 @@
         <section class="screen screen--app" id="screen-profile" hidden>
           <header class="page-head">
             <div>
-              <h1 class="page-head__greeting">Profile &amp; settings</h1>
-              <p class="page-head__sub">Your account details, read from the current session</p>
+              <h1 class="page-head__greeting">Your profile</h1>
+              <p class="page-head__sub">Everything here comes from your account</p>
             </div>
           </header>
 
-          <article class="card profile-card">
+          <article class="card liquid-glass profile-card">
             <span class="avatar avatar--lg" data-user-initials aria-hidden="true">—</span>
             <div class="profile-card__text">
               <h2 data-user-name>—</h2>
@@ -926,20 +943,20 @@
             <span class="badge badge--live" data-user-badge hidden>Signed in</span>
           </article>
 
-          <section class="card settings-group" aria-labelledby="set-activity">
-            <h2 id="set-activity" class="settings-group__title">Activity preferences</h2>
+          <section class="card liquid-glass settings-group" aria-labelledby="set-activity">
+            <h2 id="set-activity" class="settings-group__title">What you like to do</h2>
             <div class="chips" id="pref-activities">
               <label class="chip"><input type="checkbox" value="running"><span>Running</span></label>
               <label class="chip"><input type="checkbox" value="cycling"><span>Cycling</span></label>
               <label class="chip"><input type="checkbox" value="outdoor_football"><span>Outdoor football</span></label>
               <label class="chip"><input type="checkbox" value="evening_walks"><span>Evening walks</span></label>
             </div>
-            <p class="settings-group__note">Saved to your account. Ticking one saves it immediately.</p>
+            <p class="settings-group__note">Tap to choose — we save it as you go.</p>
             <p class="field__error" data-error-for="pref-activities" hidden></p>
           </section>
 
-          <section class="card settings-group" aria-labelledby="set-location">
-            <h2 id="set-location" class="settings-group__title">Preferred location</h2>
+          <section class="card liquid-glass settings-group" aria-labelledby="set-location">
+            <h2 id="set-location" class="settings-group__title">Your area</h2>
             <div class="settings-row">
               <span class="settings-row__label">
                 <svg class="icon icon--sm" aria-hidden="true"><use href="#i-location-pin"/></svg>
@@ -958,7 +975,7 @@
                 <button type="button" class="btn btn--quiet btn--sm" data-action="search-location">Change</button>
               </span>
             </div>
-            <p class="settings-group__note" data-pref-location-note>Your browser is asked where you are, and nothing is sent until you allow it. Use the target icon to save that spot as your preference, or Change to read somewhere else.</p>
+            <p class="settings-group__note" data-pref-location-note>We ask your browser where you are, and only use it after you say yes. Tap the target to save that spot, or Change to look up another place.</p>
             <p class="field__error" data-error-for="pref-location" hidden></p>
 
             <div class="place-search" data-panel="place-search" hidden>
@@ -975,7 +992,7 @@
             </div>
           </section>
 
-          <section class="card settings-group" aria-labelledby="set-notify">
+          <section class="card liquid-glass settings-group" aria-labelledby="set-notify">
             <h2 id="set-notify" class="settings-group__title">Notifications</h2>
             <label class="settings-row settings-row--toggle">
               <span class="settings-row__label">Daily AQI summary</span>
@@ -989,10 +1006,10 @@
               <span class="settings-row__label">Weekly air-quality digest</span>
               <input type="checkbox" class="switch" disabled>
             </label>
-            <p class="settings-group__note">Not available yet. Nothing delivers these, so turning one on would be a promise the app cannot keep — the switches are disabled until sending actually exists.</p>
+            <p class="settings-group__note">Not ready yet. We don't send these today, so the switches are off for now.</p>
           </section>
 
-          <section class="card settings-group" aria-labelledby="set-account">
+          <section class="card liquid-glass settings-group" aria-labelledby="set-account">
             <h2 id="set-account" class="settings-group__title">Account</h2>
             <div class="settings-row">
               <span class="settings-row__label">Email verification</span>
@@ -1027,7 +1044,7 @@
             </div>
             <div class="settings-row" data-panel="delete" hidden>
               <form id="form-delete-account" novalidate>
-                <p class="settings-group__note">This deletes your account and everything saved to it. There is no undo.</p>
+                <p class="settings-group__note">This permanently deletes your account and everything in it. You can't undo it.</p>
                 <div class="field">
                   <label for="del-password">Confirm with your password</label>
                   <input class="input" type="password" id="del-password" autocomplete="current-password" required>
@@ -1045,7 +1062,7 @@
             </div>
           </section>
 
-          <p class="form-card__note"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-info"/></svg> Your name, email, verification state, activities and location all come from your account and survive signing out. Notifications are the one thing here that is not stored yet.</p>
+          <p class="form-card__note"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-info"/></svg> Your name, email, activities and location are saved to your account, so they're here when you return. Notifications aren't saved yet.</p>
 
           <button type="button" class="btn btn--ghost btn--block" data-action="logout"><svg class="icon" aria-hidden="true"><use href="#i-logout"/></svg> Log out</button>
         </section>
@@ -1053,7 +1070,7 @@
       </main>
 
       <!-- Mobile bottom navigation (exactly five items) -->
-      <nav class="tabbar" aria-label="Primary">
+      <nav class="tabbar liquid-glass-strong" aria-label="Primary">
         <button type="button" class="tabbar__item is-active" data-nav="dashboard" aria-current="page">
           <svg class="icon" aria-hidden="true"><use href="#i-home"/></svg><span>Home</span>
         </button>

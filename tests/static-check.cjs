@@ -58,7 +58,7 @@ const screenDiff = requiredScreens.filter((s) => !jsScreens.includes(s)).concat(
 check('router screen table matches HTML', screenDiff.length === 0, screenDiff.join(', '));
 
 // 6. exactly five bottom-nav items, with the mandated labels
-const tabbar = html.match(/<nav class="tabbar"[\s\S]*?<\/nav>/);
+const tabbar = html.match(/<nav class="tabbar[^"]*"[\s\S]*?<\/nav>/);
 const items = tabbar ? [...tabbar[0].matchAll(/<span>([^<]+)<\/span>/g)].map((m) => m[1]) : [];
 check('bottom nav has exactly 5 items', items.length === 5, JSON.stringify(items));
 check('bottom nav labels are Home/Radar/Planner/AI Chat/Profile',
@@ -72,6 +72,63 @@ const used = new Set([...css.matchAll(/var\((--[a-z0-9\-]+)/g)].map((m) => m[1])
 const inlineSet = new Set([...html.matchAll(/--([a-z0-9\-]+):/g)].map((m) => '--' + m[1]));
 const undeclared = [...used].filter((v) => !declared.has(v) && !inlineSet.has(v));
 check('all CSS variables declared', undeclared.length === 0, undeclared.join(', '));
+
+// 7b. Phase 2 — the monochrome glass restyle. Three things rot silently here:
+//     a hue creeping back in, the glass edge ring swallowing clicks, and the
+//     background video disappearing behind a wrong path or data-kind.
+const mono = css + js + html;
+function isNeutralHex(h) {
+  const s = (h.length === 3 || h.length === 4)
+    ? [...h.slice(0, 3)].map((c) => c + c).join('')
+    : h.slice(0, 6);
+  if (s.length !== 6) return false;
+  const t = s.toLowerCase();
+  return t.slice(0, 2) === t.slice(2, 4) && t.slice(2, 4) === t.slice(4, 6);
+}
+const strayHexes = [...mono.matchAll(/(?:#|%23)([0-9a-fA-F]{3,8})\b/g)]
+  .map((m) => m[1])
+  .filter((h) => !isNeutralHex(h));
+check('every hex colour in the shipped UI is neutral gray', strayHexes.length === 0, strayHexes.join(', '));
+const strayHues = [...css.matchAll(/hsla?\(\s*(-?\d+)/g)].map((m) => Number(m[1])).filter((h) => h !== 0);
+check('every hsl() hue in style.css is 0 (strict grayscale)', strayHues.length === 0, strayHues.join(', '));
+check('no rgba()/rgb()/hsla() colour calls left in style.css',
+  !/\brgba?\(|\bhsla\(/.test(css), 'found legacy colour syntax');
+check('Manrope fully replaced by self-hosted Poppins',
+  !/manrope/i.test(mono), 'Manrope still referenced');
+
+const glassApplied = (html.match(/liquid-glass/g) || []).length;
+check(`glass surfaces applied in markup (>= 20)`, glassApplied >= 20, `found ${glassApplied}`);
+check('both glass classes are defined in style.css',
+  /\.liquid-glass\s*\{/.test(css) && /\.liquid-glass-strong\s*\{/.test(css), 'missing .liquid-glass or .liquid-glass-strong rule');
+check('glass edge ring is click-inert',
+  /\.liquid-glass::before[\s\S]{0,600}?pointer-events:\s*none/.test(css), 'no pointer-events:none on the edge pseudo');
+check('glass edge ring is masked to the border box',
+  /mask-composite:\s*exclude/.test(css), 'mask-composite missing');
+check('chrome bars carry strong glass and keep their own position',
+  ['topbar', 'tabbar', 'sidenav'].every((c) => new RegExp(`class="${c}[^"]*liquid-glass-strong`).test(html))
+    && /\.topbar\.liquid-glass-strong[\s\S]{0,120}position:\s*sticky/.test(css));
+
+const videoFile = 'media/com_hazeguard/assets/video/haze-loop.mp4';
+check('background stage markup is in the template',
+  /class="bg-stage"/.test(html) && /class="bg-video"/.test(html) && /class="bg-scrim"/.test(html));
+check('self-hosted video file exists on disk', fs.existsSync(path.join(root, videoFile)));
+check('markup points at the self-hosted video', html.includes(videoFile));
+check('video is decorative and cannot capture input',
+  /class="bg-stage" aria-hidden="true"/.test(html)
+    && /\.bg-stage\s*\{[\s\S]{0,200}?pointer-events:\s*none/.test(css)
+    && /class="bg-video"[^>]*\bmuted\b/.test(html));
+check('video is off on app screens via data-kind',
+  css.includes('body[data-kind="app"] .bg-video { display: none; }'));
+check('video is off under prefers-reduced-motion',
+  /@media \(prefers-reduced-motion: reduce\)[\s\S]{0,400}?\.bg-video\s*\{\s*display:\s*none/.test(css));
+check('the stage has a static frame fallback behind the video',
+  /\.bg-stage\s*\{[\s\S]{0,400}?linear-gradient\(/.test(css));
+
+const fontUrls = [...css.matchAll(/url\('(\.\.\/assets\/fonts\/[^']+)'\)/g)].map((m) => m[1]);
+const missingFonts = fontUrls.filter((u) => !fs.existsSync(path.join(root, 'media/com_hazeguard/css', u)));
+check(`all ${fontUrls.length} @font-face files exist on disk`, missingFonts.length === 0, missingFonts.join(', '));
+check('the display weight (800) is self-hosted', fontUrls.some((u) => u.includes('800')));
+check('the serif emphasis face is self-hosted', fontUrls.some((u) => /source-serif/i.test(u)));
 
 // 8. no console logging left in shipped JS
 check('no console.* in app.js', !/console\.(log|debug|info)\(/.test(js), 'found console usage');
@@ -192,7 +249,7 @@ const notifyBlock = html.slice(html.indexOf('id="set-notify"'), html.indexOf('id
 check('the notification switches are disabled',
   (notifyBlock.match(/type="checkbox" class="switch" disabled/g) || []).length === 3);
 check('the notification group says why it is unavailable',
-  /Not available yet/.test(notifyBlock));
+  /Not (ready|available) yet/.test(notifyBlock));
 check('nothing writes a notification preference',
   !/notif/i.test(js) || !/saveNotif/.test(js));
 

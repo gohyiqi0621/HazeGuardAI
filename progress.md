@@ -216,7 +216,12 @@ Convention (**implemented**): JSON responses `{"ok": bool, "data": ..., "error":
 - **Two owner-reported bugs on a real page load (2026-10-12), both fixed:**
   1. **`Locating…` and `Searching…` rendered with three junk glyphs after the word.** This was **file corruption I had introduced earlier in this same session**, not a browser or server problem. A PowerShell `Get-Content -Raw` → `[IO.File]::WriteAllText` round-trip decodes bytes as Windows-1252 and writes them back as UTF-8, so every non-ASCII character silently became two or three — an ellipsis (U+2026) became a-circumflex + euro + broken bar. It hit exactly the two files I had round-tripped — `app.js` and `ProfileModel.php` — and nothing else, which is what identified it. **The page charset was always correct** (`Content-Type: text/html; charset=UTF-8` plus `<meta charset="UTF-8">`), which is why the search pointed at the files rather than the server. The file stayed *valid* UTF-8 and still parsed, so **no existing test noticed** — repaired with `tests/encoding-check.php` (`--fix` reverses it run by run), which is now part of the documented commands. **Lesson: do not use PowerShell to rewrite UTF-8 source here; use the Edit tool.**
   2. **The location row sat on "Locating…" forever after a refresh, and relocate reported no location.** Two separate causes. (a) **The template shipped `Locating…` as the row's initial markup**, so any detection path that did not complete — including `if (!window.HazeAir) return` — left it waiting with no explanation. The markup now ships `Not set`, and *only* a detection that has actually started may say `Locating…`; every exit path sets a definite value. (b) **Two overlapping `getCurrentPosition` calls**: `airquality.js` boots with `refresh()` and the profile screen independently called `locate()`, and two concurrent calls fight over the permission prompt / GPS wake, so the second can time out while the first succeeded. `locate()` now **shares one in-flight promise** and releases it on settle — including on denial, so one refusal cannot wedge the page. Verified by `tests/locate-check.cjs`, which lifts the real function out of the source and runs it against a stub navigator: 3 concurrent callers → **1** request, all get the same answer, a later call is fresh, and **a denial releases the request too**.
-- **Not performed:** browser verification (screenshots, console, interaction, responsive harness at 360/390/768/1024/1440). **DESCOPED by user on 2026-10-11 — the user will verify manually.** `tests/responsive.html` + `tests/serve.cjs` (port 8123) remain available for it.
+- **2026-10-12 — after the Phase 2 redesign (full run of every suite):**
+  - `php tests/run.php` — **ALL 296 ACCEPTANCE CHECKS PASS**. Two of T1B.1's assertions were rewritten first: `AuthModel::register()` deliberately *resumes* an unfinished sign-up (re-sends the code, `needs_verification: true`) rather than rejecting a pending duplicate, so the old "duplicate email rejected" expectation was testing a contract the code never had. Duplicate rejection is now asserted against a **verified** email. Product code was not changed to make the suite green.
+  - `node tests/static-check.cjs` — **ALL 132 PASS** (113 → 132; the 21 new checks are listed in §16 Session 16).
+  - `node tests/locate-check.cjs` — ALL PASS (5). `php tests/encoding-check.php` — clean. `node --check` on `app.js` and `static-check.cjs` — clean.
+  - HTTP smoke (PHP built-in server): page **200** (bg-stage + video + 42 glass applications, no Manrope), `style.css` **200** (0 `rgba()`/`hsla()`, 188 modern `hsl()`, 19 glass rules), `haze-loop.mp4` **200** `video/mp4` 12,430,549 B, both checked fonts **200** `font/woff2`, `GET /api/auth/session` **200**.
+- **Not performed:** browser verification (screenshots, console, interaction, responsive harness at 360/390/768/1024/1440). **DESCOPED by user on 2026-10-11 — the user will verify manually.** `tests/responsive.html` + `tests/serve.cjs` (port 8123) remain available for it. This matters most for the Phase 2 restyle: no browser is attached, so **glass legibility, background-video brightness and the responsive layout have never been rendered** — they are reasoned and statically checked only.
 
 ## 11. Known bugs and blockers
 
@@ -241,6 +246,8 @@ See §3. Additional: prototype is a single-page screen router (`frontend/js/app.
 ## 13. Current stage
 
 **Stage 1B — nearly complete.** Register, email verification, password login, email-OTP login and **password reset** are implemented, wired into the frontend, and verified by **217 backend acceptance checks + 52 frontend static checks, all passing**.
+
+**Design track (separate from the stage table): Phase 2 of the liquid-glass redesign is COMPLETED (2026-10-12).** `design.md` (Phase 1, proposal) has been implemented against the existing prototype — strictly monochrome, self-hosted video on landing/auth, reusable glass classes, self-hosted Poppins + Source Serif 4. Full suite green: **296 backend + 132 static + 5 locate checks**. No §5 task ID exists for the redesign, so §15's percentage does not move. Details and as-built deviations: §16 Session 16.
 
 Work delivered since §9 was last written (2026-10-12), not yet reflected above:
 - **T3.1 (air quality) is effectively done, ahead of its stage.** `AirController`/`AirModel` + `media/…/js/airquality.js` serve a **real** Open-Meteo reading with an hourly re-read, BigDataCloud reverse geocoding for the city label, a 4-state model (live / stale / unavailable / no-JS) that never shows a stand-in number, and browser geolocation on request. ~35 of the 217 checks cover it.
@@ -278,8 +285,8 @@ Work delivered since §9 was last written (2026-10-12), not yet reflected above:
 **Dev commands:**
 ```
 php -S localhost:8000 index.php                         # dev server (site + JSON API)
-php tests/run.php                                        # 294 backend acceptance checks
-node tests/static-check.cjs                              # 113 frontend static checks
+php tests/run.php                                        # 296 backend acceptance checks
+node tests/static-check.cjs                              # 132 frontend static checks
 node tests/locate-check.cjs                              # geolocation promise sharing
 php tests/encoding-check.php                             # mojibake scan (see §10)
 node tests/serve.cjs 8123                                # static server for the responsive harness

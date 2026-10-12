@@ -127,6 +127,22 @@ function navigate(name) {
 
 window.addEventListener('hashchange', () => render(parseHash()));
 
+// Surface errors instead of failing silently: any uncaught exception or
+// unhandled promise rejection reaches the user as a descriptive toast.
+window.addEventListener('error', (e) => {
+  if (e.error) toast('Something went wrong. Please reload and try again.', 'warn');
+});
+window.addEventListener('unhandledrejection', (e) => {
+  const r = e.reason;
+  if (r && r.code === 'network_error') {
+    toast(r.message || 'Could not reach the server. Check your connection.', 'warn');
+  } else if (r && r.message) {
+    toast(r.message, 'warn');
+  } else {
+    toast('Something went wrong. Please try again.', 'warn');
+  }
+});
+
 /* ------------------------------------------------------------- utilities -- */
 // Splash: shown by the markup on initial load only; fade out once the page
 // (fonts, images) is actually ready — or immediately if it already is.
@@ -142,13 +158,23 @@ window.addEventListener('hashchange', () => render(parseHash()));
   else window.addEventListener('load', hide, { once: true });
 })();
 
+// Data saver: the decorative loop behind the landing and auth screens is ~12 MB,
+// which is wallpaper nobody on a metered plan asked for. Drop the element while
+// the request is still in flight — the stage's static frame is what shows.
+(function bgVideoForDataSaver() {
+  const connection = navigator.connection;
+  if (!connection || !connection.saveData) return;
+  const video = document.querySelector('.bg-video');
+  if (video) video.remove();
+})();
+
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
 function toast(message, variant = 'ok') {
   const region = $('#toast-region');
   const el = document.createElement('div');
-  el.className = 'toast' + (variant === 'warn' ? ' toast--warn' : '');
+  el.className = 'toast liquid-glass-strong' + (variant === 'warn' ? ' toast--warn' : '');
   const iconId = variant === 'warn' ? '#i-info' : '#i-check';
   el.innerHTML = `<svg class="icon" aria-hidden="true"><use href="${iconId}"/></svg><span></span>`;
   el.lastElementChild.textContent = message;
@@ -294,6 +320,12 @@ $('#otp-resend').addEventListener('click', async () => {
     otpCountdown.start();
     toast('If that address has an account, a new code is on its way.');
   } catch (err) {
+    if (err.code === 'no_account') {
+      toast(err.message, 'warn');
+      $('#reg-email').value = pendingEmail;
+      navigate('register');
+      return;
+    }
     toast(err.message, 'warn');
   }
 });
@@ -931,8 +963,9 @@ $('#form-otp-request').addEventListener('submit', async (e) => {
   e.preventDefault();
   if (!validateForm(e.target, ['otp-email'])) return;
   busy(e.target, true);
+  const email = $('#otp-email').value.trim();
   try {
-    pendingEmail = $('#otp-email').value.trim();
+    pendingEmail = email;
     await HazeAPI.requestLoginOtp(pendingEmail);
     e.target.hidden = true;
     $('#form-otp-verify').hidden = false;
@@ -940,6 +973,18 @@ $('#form-otp-request').addEventListener('submit', async (e) => {
     $('#otp-code').focus();
     toast('If that address has an account, a code is on its way.');
   } catch (err) {
+    if (err.code === 'no_account') {
+      // No account with that address: don't pretend a code was sent. Tell them to
+      // register and drop them straight on the sign-up form, pre-filled.
+      toast(err.message, 'warn');
+      $('#reg-email').value = pendingEmail;
+      navigate('register');
+      return;
+    }
+    if (err.code === 'email_not_verified') {
+      toast(err.message, 'warn');
+      return;
+    }
     showApiError(err, { email: 'otp-email' });
   } finally {
     busy(e.target, false);
@@ -986,14 +1031,29 @@ $('#form-register').addEventListener('submit', async (e) => {
   if (!ok) return;
 
   busy(e.target, true);
+  const email = $('#reg-email').value.trim();
+  const username = $('#reg-username').value.trim();
   try {
-    const email = $('#reg-email').value.trim();
-    const data = await HazeAPI.register($('#reg-username').value.trim(), email, $('#reg-password').value);
+    const data = await HazeAPI.register(username, email, $('#reg-password').value);
     pendingEmail = data.email || email;
     $('#otp-target').textContent = pendingEmail;
-    toast('Account created. Check your inbox for the 6-digit code.');
+    // A re-attempt at a sign-up that stalled on email delivery is routed to the
+    // same verify screen, so the user can enter or resend the code instead of
+    // being told the address is taken.
+    if (data.needs_verification) {
+      toast(data.message || 'We sent a fresh code to your email.');
+    } else {
+      toast('Account created. Check your inbox for the 6-digit code.');
+    }
     navigate('otp');
   } catch (err) {
+    if (err.code === 'mail_failed') {
+      pendingEmail = (err.fields && err.fields.email) || email;
+      $('#otp-target').textContent = pendingEmail;
+      toast(err.message || 'We could not send the code. Use “Resend code” to try again.', 'warn');
+      navigate('otp');
+      return;
+    }
     showApiError(err, { username: 'reg-username', email: 'reg-email', password: 'reg-password' });
   } finally {
     busy(e.target, false);
@@ -1198,8 +1258,8 @@ function renderChart(el, values, labels, unit) {
   el.innerHTML =
     `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" role="presentation">
       <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#34d399" stop-opacity="0.28"/>
-        <stop offset="1" stop-color="#34d399" stop-opacity="0"/>
+        <stop offset="0" stop-color="#ffffff" stop-opacity="0.28"/>
+        <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
       </linearGradient></defs>
       ${yTicks}
       <path d="${area}" fill="url(#${gid})"/>

@@ -238,8 +238,15 @@ check('OTP hash is sha256 of the code', $stored === hash('sha256', (string) $cod
 
 $dupU = $auth->register($u1, unique('other') . '@example.test', $PW);
 check('duplicate username rejected', $dupU['ok'] === false && isset($dupU['fields']['username']));
+// An unfinished sign-up is resumed rather than dead-ended on "already
+// registered" (AuthModel::register), and the resume replaces the verification
+// code — so re-read it before the checks that use it.
 $dupE = $auth->register(unique('bob'), $e1, $PW);
-check('duplicate email rejected', $dupE['ok'] === false && isset($dupE['fields']['email']));
+check('unfinished sign-up resumes and sends a fresh code',
+    $dupE['ok'] === true && ($dupE['data']['needs_verification'] ?? false) === true,
+    json_encode($dupE));
+$code1 = latestMailCode($mailDir, $e1);
+check('the resumed sign-up emailed a new code', $code1 !== null);
 $bad = $auth->register('x', 'not-an-email', 'short');
 check('invalid username/email/password rejected with 3 field errors',
     $bad['ok'] === false && count($bad['fields']) === 3, json_encode($bad['fields']));
@@ -253,6 +260,10 @@ check('account becomes active', ($after['status'] ?? '') === 'active');
 check('email_verified_at is set', ($after['email_verified_at'] ?? null) !== null);
 $reuse = Database::run('SELECT used_at FROM email_otps WHERE user_id = :u ORDER BY id DESC LIMIT 1', ['u' => $row['id']])->fetchColumn();
 check('verification code is marked used after success', $reuse !== false && $reuse !== null);
+// the resume path above only applies to *unverified* addresses: once verified,
+// the email really is closed to anyone else.
+$dupVerified = $auth->register(unique('carol'), $e1, $PW);
+check('duplicate email rejected', $dupVerified['ok'] === false && isset($dupVerified['fields']['email']), json_encode($dupVerified));
 
 // expiry
 $uExp = unique('exp');
@@ -334,7 +345,7 @@ $auth->register($u3, $e3, $PW);
 $auth->verifyEmail($e3, (string) latestMailCode($mailDir, $e3));
 
 $unknown = $auth->requestLoginOtp('ghost@example.test', '10.2.2.1');
-check('OTP request for unknown email reports success (no enumeration)', $unknown['ok'] === true);
+check('OTP request for an unregistered email reports no_account (no code sent)', $unknown['ok'] === false && $unknown['code'] === 'no_account');
 
 $req = $auth->requestLoginOtp($e3, '10.2.2.2');
 check('OTP request succeeds', $req['ok'] === true);

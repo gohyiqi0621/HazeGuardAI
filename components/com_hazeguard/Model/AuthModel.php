@@ -59,7 +59,32 @@ final class AuthModel
             if ($this->findBy('username', $username) !== null) {
                 $fields['username'] = 'That username is already taken.';
             }
-            if ($this->findBy('email', $email) !== null) {
+            $existing = $this->findBy('email', $email);
+            if ($existing !== null) {
+                if ($existing['email_verified_at'] === null) {
+                    // An unfinished sign-up (e.g. the first attempt failed to
+                    // deliver the code). Re-issue and re-send the verification
+                    // code instead of blocking them with "email already
+                    // registered", which would trap them in a dead end.
+                    $code = $this->tokens->issueOtp((int) $existing['id'], TokenModel::PURPOSE_VERIFY_EMAIL);
+                    $reason = $this->deliver(static fn () => Mailer::sendVerificationCode($email, $code));
+                    if ($reason !== null) {
+                        return $this->fail(
+                            'mail_failed',
+                            'We found your unfinished sign-up, but the verification email did not go out'
+                            . " ({$reason}). Use \"Resend code\" to try again.",
+                            ['email' => $email],
+                            502
+                        );
+                    }
+
+                    return $this->pass([
+                        'email' => $email,
+                        'username' => $existing['username'],
+                        'needs_verification' => true,
+                        'message' => 'We found your unfinished sign-up and sent a fresh code to your email.',
+                    ]);
+                }
                 $fields['email'] = 'That email is already registered.';
             }
         }
@@ -211,11 +236,25 @@ final class AuthModel
         }
 
         $user = $this->findBy('email', $email);
-        if ($user !== null && $user['status'] === 'active') {
-            $code = $this->tokens->issueOtp((int) $user['id'], TokenModel::PURPOSE_LOGIN);
-            // Always report success, so the endpoint cannot probe accounts.
-            $this->deliver(static fn () => Mailer::sendLoginOtp($email, $code));
+        if ($user === null) {
+            // No account with this address: sending a code is pointless and would
+            // leave the visitor waiting on mail that can never arrive. Tell them
+            // to register instead of pretending a code is on its way.
+            return $this->fail('no_account', 'That email is not registered. Create a free account to continue.', [], 404);
         }
+
+        if ($user['status'] !== 'active') {
+            // Registered but not yet usable: a sign-in code cannot help, so point
+            // them at the right next step rather than sending a dead code.
+            if ($user['email_verified_at'] === null) {
+                return $this->fail('email_not_verified', 'That email is registered but not verified yet. Verify it to sign in.', [], 403);
+            }
+
+            return $this->fail('account_suspended', 'This account is suspended. Contact support if you think this is a mistake.', [], 403);
+        }
+
+        $code = $this->tokens->issueOtp((int) $user['id'], TokenModel::PURPOSE_LOGIN);
+        $this->deliver(static fn () => Mailer::sendLoginOtp($email, $code));
 
         return $this->pass(['sent' => true]);
     }
@@ -359,13 +398,24 @@ final class AuthModel
         } catch (\RuntimeException $e) {
             error_log('[hazeguard] mail delivery failed: ' . $e->getMessage());
 
-            // The provider's own words are the only thing that tells an operator
-            // whether to blame the key, the sender address or the IP allow-list,
-            // so they are worth surfacing while APP_DEBUG is on — and worth
-            // withholding in production, where they describe our configuration.
-            return Config::bool('APP_DEBUG', false)
-                ? $e->getMessage()
-                : 'the mail provider refused the message';
+            // In debug we surface the provider's own words (they say whether to
+            // blame the key, the sender or the IP allow-list). In production we
+            // still owe the user a clear, actionable reason — never a silent
+            // failure — without echoing our internal configuration.
+            if (Config::bool('APP_DEBUG', false)) {
+                return $e->getMessage();
+            }
+
+            $msg = strtolower($e->getMessage());
+            if (str_contains($msg, 'brevo')
+                && (str_contains($msg, 'key') || str_contains($msg, 'credential') || str_contains($msg, 'configured'))) {
+                return 'the mail service is not configured on this server (missing API key), so the verification email could not be sent';
+            }
+            if (str_contains($msg, 'sender')) {
+                return 'the mail service rejected the sender address, so the verification email could not be sent';
+            }
+
+            return 'the mail service could not be reached, so the verification email could not be sent';
         }
     }
 
