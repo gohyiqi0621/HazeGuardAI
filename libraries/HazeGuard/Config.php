@@ -35,22 +35,32 @@ final class Config
             $key = trim(substr($line, 0, $eq));
             $value = trim(substr($line, $eq + 1));
             // strip a single pair of surrounding quotes, keep everything else verbatim
-            if (strlen($value) >= 2
-                && (($value[0] === '"' && $value[-1] === '"') || ($value[0] === "'" && $value[-1] === "'"))) {
+            if (
+                strlen($value) >= 2
+                && (($value[0] === '"' && $value[-1] === '"') || ($value[0] === "'" && $value[-1] === "'"))
+            ) {
                 $value = substr($value, 1, -1);
             }
             self::$values[$key] = $value;
         }
     }
 
+
     public static function get(string $key, ?string $default = null): ?string
     {
+        // Environment variables take priority over .env.
+        $env = getenv($key);
+        if ($env !== false) {
+            return $env;
+        }
+
         if (array_key_exists($key, self::$values)) {
             return self::$values[$key];
         }
-        $env = getenv($key);
-        return $env === false ? $default : $env;
+
+        return $default;
     }
+
 
     public static function require(string $key): string
     {
