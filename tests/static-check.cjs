@@ -73,25 +73,20 @@ const inlineSet = new Set([...html.matchAll(/--([a-z0-9\-]+):/g)].map((m) => '--
 const undeclared = [...used].filter((v) => !declared.has(v) && !inlineSet.has(v));
 check('all CSS variables declared', undeclared.length === 0, undeclared.join(', '));
 
-// 7b. Phase 2 — the monochrome glass restyle. Three things rot silently here:
-//     a hue creeping back in, the glass edge ring swallowing clicks, and the
-//     background video disappearing behind a wrong path or data-kind.
+// 7b. Phase 3 — the bright, layered, green-forward colour restyle. What rots
+//     silently here is now the opposite of the old monochrome phase: the green
+//     key brand colour drifting out of the accent, the theme silently going dark
+//     again, or legacy rgb()/hsla() syntax slipping back in.
 const mono = css + js + html;
-function isNeutralHex(h) {
-  const s = (h.length === 3 || h.length === 4)
-    ? [...h.slice(0, 3)].map((c) => c + c).join('')
-    : h.slice(0, 6);
-  if (s.length !== 6) return false;
-  const t = s.toLowerCase();
-  return t.slice(0, 2) === t.slice(2, 4) && t.slice(2, 4) === t.slice(4, 6);
-}
-const strayHexes = [...mono.matchAll(/(?:#|%23)([0-9a-fA-F]{3,8})\b/g)]
-  .map((m) => m[1])
-  .filter((h) => !isNeutralHex(h));
-check('every hex colour in the shipped UI is neutral gray', strayHexes.length === 0, strayHexes.join(', '));
-const strayHues = [...css.matchAll(/hsla?\(\s*(-?\d+)/g)].map((m) => Number(m[1])).filter((h) => h !== 0);
-check('every hsl() hue in style.css is 0 (strict grayscale)', strayHues.length === 0, strayHues.join(', '));
-check('no rgba()/rgb()/hsla() colour calls left in style.css',
+const accentHueMatch = css.match(/--accent:\s*hsl\(\s*(-?\d+)/);
+const accentHue = accentHueMatch ? Number(accentHueMatch[1]) : null;
+check('accent is a green hue (key brand colour)',
+  accentHue !== null && accentHue >= 110 && accentHue <= 185, `hue ${accentHue}`);
+const allHues = [...css.matchAll(/hsla?\(\s*(-?\d+)/g)].map((m) => Number(m[1]));
+const colourHues = allHues.filter((h) => h !== 0);
+check('palette is colourful, not strict grayscale', colourHues.length >= 5, `${colourHues.length} non-zero hues`);
+check('theme is light (color-scheme: light)', /color-scheme:\s*light/.test(css));
+check('no rgba()/rgb()/hsla() legacy colour calls in style.css',
   !/\brgba?\(|\bhsla\(/.test(css), 'found legacy colour syntax');
 check('Manrope fully replaced by self-hosted Poppins',
   !/manrope/i.test(mono), 'Manrope still referenced');
