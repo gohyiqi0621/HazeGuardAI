@@ -12,18 +12,18 @@
 /* ---------------------------------------------------------------- router -- */
 const SCREENS = {
   'landing':        { kind: 'page', title: 'HazeGuard AI — Understand the air. Plan smarter. Breathe better.' },
-  'login':          { kind: 'auth', title: 'Sign in Â· HazeGuard AI' },
-  'register':       { kind: 'auth', title: 'Create account Â· HazeGuard AI' },
-  'otp':            { kind: 'auth', title: 'Verify your email Â· HazeGuard AI' },
-  'verify-result':  { kind: 'auth', title: 'Verification result Â· HazeGuard AI' },
-  'forgot':         { kind: 'auth', title: 'Reset your password Â· HazeGuard AI' },
-  'reset':          { kind: 'auth', title: 'Choose a new password Â· HazeGuard AI' },
-  'dashboard':      { kind: 'app', title: 'Dashboard Â· HazeGuard AI' },
-  'radar':          { kind: 'app', title: 'Haze Radar Â· HazeGuard AI' },
-  'planner':        { kind: 'app', title: 'AI Activity Planner Â· HazeGuard AI' },
-  'chat':           { kind: 'app', title: 'BreatheBuddy Â· HazeGuard AI' },
-  'history':        { kind: 'app', title: 'Air quality history Â· HazeGuard AI' },
-  'profile':        { kind: 'app', title: 'Profile & settings Â· HazeGuard AI' },
+  'login':          { kind: 'auth', title: 'Sign in · HazeGuard AI' },
+  'register':       { kind: 'auth', title: 'Create account · HazeGuard AI' },
+  'otp':            { kind: 'auth', title: 'Verify your email · HazeGuard AI' },
+  'verify-result':  { kind: 'auth', title: 'Verification result · HazeGuard AI' },
+  'forgot':         { kind: 'auth', title: 'Reset your password · HazeGuard AI' },
+  'reset':          { kind: 'auth', title: 'Choose a new password · HazeGuard AI' },
+  'dashboard':      { kind: 'app', title: 'Dashboard · HazeGuard AI' },
+  'radar':          { kind: 'app', title: 'Haze Radar · HazeGuard AI' },
+  'planner':        { kind: 'app', title: 'AI Activity Planner · HazeGuard AI' },
+  'chat':           { kind: 'app', title: 'BreatheBuddy · HazeGuard AI' },
+  'history':        { kind: 'app', title: 'Air quality history · HazeGuard AI' },
+  'profile':        { kind: 'app', title: 'Profile & settings · HazeGuard AI' },
 };
 
 let currentScreen = null;
@@ -534,7 +534,7 @@ function renderPlaceResults(key, places, query) {
 
   if (!places.length) {
     setPlaceListOpen(key, false);
-    placeStatus(key, query ? `No place matched “${query}â€.` : '');
+    placeStatus(key, query ? `No place matched “${query}”.` : '');
     return;
   }
   setPlaceListOpen(key, true);
@@ -558,7 +558,7 @@ function renderPlaceResults(key, places, query) {
     const meta = document.createElement('span');
     meta.className = 'place-list__meta';
     meta.textContent = [place.country, `${Number(place.lat).toFixed(3)}, ${Number(place.lon).toFixed(3)}`]
-      .filter(Boolean).join(' Â· ');
+      .filter(Boolean).join(' · ');
 
     button.append(name, meta);
     item.appendChild(button);
@@ -933,7 +933,7 @@ $('#panel-login-email').addEventListener('submit', async (e) => {
     showApiError(err, { identifier: 'login-email', password: 'login-email-pw' });
     if (err.code === 'email_not_verified') {
       pendingEmail = $('#login-email').value.trim();
-      toast('Verify your email first — switch to “Email codeâ€ to get a new one.', 'warn');
+      toast('Verify your email first — switch to “Email code” to get a new one.', 'warn');
     }
   } finally {
     busy(e.target, false);
@@ -1213,8 +1213,8 @@ const SERIES = {
 
 const METRICS = {
   aqi:  { label: 'US AQI',        unit: 'US AQI',        good: 50,  convert: (v) => v },
-  pm25: { label: 'PM2.5',         unit: 'Âµg/mÂ³',         good: 25,  convert: (v) => Math.round(v * 0.53) },
-  pm10: { label: 'PM10',          unit: 'Âµg/mÂ³',         good: 50,  convert: (v) => Math.round(v * 0.85) },
+  pm25: { label: 'PM2.5',         unit: 'µg/m³',         good: 25,  convert: (v) => Math.round(v * 0.53) },
+  pm10: { label: 'PM10',          unit: 'µg/m³',         good: 50,  convert: (v) => Math.round(v * 0.85) },
 };
 
 function aqiCategory(v) {
@@ -1225,7 +1225,7 @@ function aqiCategory(v) {
   return { label: 'Very unhealthy', ribbon: 'ribbon--4' };
 }
 
-const DEMO_SRC = 'Illustrative demo value Â· planned source: Open-Meteo Air Quality API (modelled estimate, not an official station reading)';
+const DEMO_SRC = 'Illustrative demo value · planned source: Open-Meteo Air Quality API (modelled estimate, not an official station reading)';
 
 /* ----------------------------------------------------------------- charts - */
 let chartSeq = 0;
@@ -1321,13 +1321,13 @@ $('#form-planner').addEventListener('submit', (e) => {
     planCounter += 1;
 
     $('#plan-ribbon').className = 'ribbon ' + cat.ribbon;
-    $('#plan-ribbon').textContent = `${aqi <= 100 ? 'Good window' : 'Adjust your plan'} Â· AQI ${aqi}`;
+    $('#plan-ribbon').textContent = `${aqi <= 100 ? 'Good window' : 'Adjust your plan'} · AQI ${aqi}`;
     $('#plan-summary').textContent =
       `A ${time} ${activity.toLowerCase()} session in ${locationName} is ${aqi <= 100 ? 'reasonable' : 'not ideal'} in this demo scenario.`;
     $('#plan-why').textContent =
       `The illustrative AQI for your time and place sits at ${aqi} (${cat.label}, US AQI)${aqi > 100 ? ' — above 100, where sensitive groups should cut back' : ' — below the 100 threshold where sensitive groups should cut back'}. ` +
       `${evening ? 'Particulate levels ease after sunset in the demo pattern.' : 'Afternoon values are typically higher in the demo pattern.'} ` +
-      `Data used: US AQI ${aqi}, PM2.5 ${Math.round(aqi * 0.53)} Âµg/mÂ³ Â· ${prefs} preference${prefs === 1 ? '' : 's'} applied Â· illustrative timestamp 11 Oct 2026, 10:40 +08:00 Â· planned source Open-Meteo (modelled estimate).`;
+      `Data used: US AQI ${aqi}, PM2.5 ${Math.round(aqi * 0.53)} µg/m³ · ${prefs} preference${prefs === 1 ? '' : 's'} applied · illustrative timestamp 11 Oct 2026, 10:40 +08:00 · planned source Open-Meteo (modelled estimate).`;
     $('#plan-alt').textContent = aqi > 100
       ? 'Move it indoors: a covered court, gym session or mall walk keeps your training going without the particulate load.'
       : 'If AQI climbs above 100 by then, switch to a covered stadium session or a 45-minute indoor workout.';
@@ -1363,8 +1363,8 @@ function addMessage(text, cls) {
 
 function botReply(text) {
   const q = text.toLowerCase();
-  const reading = 'AQI 72 (Moderate), PM2.5 38 Âµg/mÂ³, PM10 61 Âµg/mÂ³';
-  const src = 'Demo data Â· illustrative timestamp 11 Oct 2026, 10:40 +08:00 Â· planned source: Open-Meteo (modelled estimate)';
+  const reading = 'AQI 72 (Moderate), PM2.5 38 µg/m³, PM10 61 µg/m³';
+  const src = 'Demo data · illustrative timestamp 11 Oct 2026, 10:40 +08:00 · planned source: Open-Meteo (modelled estimate)';
 
   if (/(run|jog|exercise|football|hike|cycling|cycle|walk|picnic|workout|outdoor)/.test(q)) {
     return { text: `For a demo scenario right now: ${reading}. That’s fine for most people; sensitive groups should keep intense effort shorter and away from busy roads. In the prototype I can only cite these illustrative values; the real BreatheBuddy will call live air-quality tools (Stage 4).`, src };
@@ -1373,7 +1373,7 @@ function botReply(text) {
     return { text: 'AQI is a 0–300+ scale: 0–50 good, 51–100 moderate, 101–150 unhealthy for sensitive groups, 151+ unhealthy for everyone. The demo reading of 72 sits in the moderate band — active people can be out, but sensitive groups should ease up at peak hours.', src };
   }
   if (/(pm|particulate|dust|particle)/.test(q)) {
-    return { text: 'PM2.5 is fine particulate matter under 2.5 Âµg/m in diameter — small enough to reach deep into the lungs. PM10 is coarser dust. The demo shows PM2.5 at 38 and PM10 at 61 Âµg/mÂ³. Modelled estimates like these are labelled as estimates, never as official station measurements.', src };
+    return { text: 'PM2.5 is fine particulate matter under 2.5 µg/m in diameter — small enough to reach deep into the lungs. PM10 is coarser dust. The demo shows PM2.5 at 38 and PM10 at 61 µg/m³. Modelled estimates like these are labelled as estimates, never as official station measurements.', src };
   }
   if (/(haze|smoke|burn|pollution|why|bad air|pollut)/.test(q)) {
     return { text: 'Haze forms when particles scatter light — usually from fires, traffic and industry, worsened by dry, still weather. In this prototype the numbers are illustrative; with the backend (Stage 3) I’ll show you real Open-Meteo estimates with their timestamp, and official APIMS station data if we can verify access to it.', src };
@@ -1457,7 +1457,7 @@ function drawHistory() {
   const summary = $('#history-summary');
 
   const periodWord = histPeriod === '24h' ? 'last 24 hours' : histPeriod === '7d' ? 'last 7 days' : 'last 30 days';
-  $('#history-title').textContent = `${metric.label} Â· ${periodWord}`;
+  $('#history-title').textContent = `${metric.label} · ${periodWord}`;
 
   if (empty) {
     chart.hidden = true;
@@ -1480,7 +1480,7 @@ function drawHistory() {
   $('#h-min').textContent = Math.min(...values);
   $('#h-good').textContent = values.filter((v) => v <= metric.good).length;
   $('#h-good-label').textContent = (histPeriod === '24h' ? 'Good hours' : 'Good days') + ` (≤${metric.good})`;
-  $('#history-src').textContent = `Illustrative demo series Â· metric: ${metric.label} (${metric.unit}) Â· planned source: Open-Meteo Air Quality API (modelled estimate)`;
+  $('#history-src').textContent = `Illustrative demo series · metric: ${metric.label} (${metric.unit}) · planned source: Open-Meteo Air Quality API (modelled estimate)`;
   chart.setAttribute('aria-label',
     `Demo chart of ${metric.label} over the ${periodWord}, ranging from ${Math.min(...values)} to ${Math.max(...values)} ${metric.unit}`);
 }

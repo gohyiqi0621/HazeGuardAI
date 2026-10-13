@@ -12,9 +12,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#000000">
+  <!-- Flags JS before first paint so the hero sequence can start hidden. The timer
+       is the safety net: if landing.js never loads, the page still reveals itself. -->
+  <script>document.documentElement.classList.add('js');setTimeout(function(){document.documentElement.classList.add('is-ready')},3000);</script>
   <title>HazeGuard AI — Understand the air. Plan smarter. Breathe better.</title>
   <meta name="description" content="HazeGuard AI helps you understand local haze and air quality, explore it on a map, and plan outdoor activities with AI help.">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23e8e8e8'/%3E%3Cpath d='M6 13h13a3.5 3.5 0 1 0-3.5-3.5M6 18h16a3 3 0 1 1-3 3' fill='none' stroke='%230a0a0a' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E">
+  <!-- Apple devices use SF Pro through the system stack; everything else gets Inter. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="<?= $base ?>/media/com_hazeguard/css/style.css">
   <!-- Leaflet 1.9.4, vendored (BSD-2-Clause, see assets/leaflet/LICENSE). The map is
        the only feature that needs it, so its CSS is deferred rather than blocking
@@ -29,7 +38,7 @@
        The video only shows where the router wants it (body[data-kind]); see
        .bg-stage in style.css for the stack order and every fallback. -->
   <div class="bg-stage" aria-hidden="true">
-    <video class="bg-video" autoplay muted loop playsinline preload="auto"
+    <video class="bg-video" autoplay muted loop playsinline disablepictureinpicture preload="auto"
            src="<?= $base ?>/media/com_hazeguard/assets/video/haze-loop.mp4"></video>
     <div class="bg-scrim"></div>
   </div>
@@ -45,7 +54,8 @@
   <noscript><style>.splash { display: none; }</style></noscript>
 
   <!-- Icon sprite: one stroke system, no emoji -->
-  <svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true" focusable="false">
+    <defs><linearGradient id="brandGrad" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#ffffff"/><stop offset="1" stop-color="#b9c2bd"/></linearGradient></defs>
     <symbol id="i-home" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V21h13V9.5"/><path d="M9.5 21v-6h5v6"/></g></symbol>
     <symbol id="i-radar" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1.1"/><path d="M12 12l6-6.4"/></g></symbol>
     <symbol id="i-planner" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M8 3v4M16 3v4M3.5 10h17"/><path d="m9.5 15.5 1.8 1.8 3.4-3.6"/></g></symbol>
@@ -74,12 +84,12 @@
     <symbol id="i-sliders" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7.5h8M17 7.5h3M4 16.5h3M12 16.5h8"/><circle cx="14.5" cy="7.5" r="2.2"/><circle cx="9.5" cy="16.5" r="2.2"/></g></symbol>
     <symbol id="i-location-pin" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s6.5-6 6.5-11a6.5 6.5 0 1 0-13 0C5.5 15 12 21 12 21z"/><circle cx="12" cy="10" r="2.4"/></g></symbol>
     <symbol id="i-shield" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 5 6v6c0 4.4 3 7.4 7 8.5 4-1.1 7-4.1 7-8.5V6z"/><path d="m9.2 12 2 2 3.6-3.8"/></g></symbol>
-    <symbol id="brand-mark" viewBox="0 0 32 32"><rect width="32" height="32" rx="9" fill="url(#brandGrad)"/><path d="M7 13.5h12a3.2 3.2 0 1 0-3.2-3.2M7 18.5h14a2.8 2.8 0 1 1-2.8 2.8" fill="none" stroke="#0a0a0a" stroke-width="2.2" stroke-linecap="round"/><defs><linearGradient id="brandGrad" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#ffffff"/><stop offset="1" stop-color="#9a9a9a"/></linearGradient></defs></symbol>
+    <symbol id="brand-mark" viewBox="0 0 32 32"><rect width="32" height="32" rx="9" fill="url(#brandGrad)"/><path d="M7 13.5h12a3.2 3.2 0 1 0-3.2-3.2M7 18.5h14a2.8 2.8 0 1 1-2.8 2.8" fill="none" stroke="#0a0a0a" stroke-width="2.2" stroke-linecap="round"/></symbol>
   </svg>
 
   <!-- ============================ LANDING ============================ -->
   <div class="screen screen--page" id="screen-landing">
-    <header class="topbar liquid-glass-strong">
+    <header class="topbar" id="topbar">
       <div class="topbar__inner">
         <a class="brand" href="#landing" data-go="landing" aria-label="HazeGuard AI home">
           <svg class="brand__mark" viewBox="0 0 32 32" aria-hidden="true"><use href="#brand-mark"/></svg>
@@ -94,23 +104,34 @@
       </div>
     </header>
 
+    <!-- Hero: deep space behind white type, so the headline never competes with
+         the planet. The live reading sits underneath as one glass card whose glow
+         takes the colour of the current AQI band (landing.js sets data-band).
+         Every data-aqi-* hook below is driven by airquality.js. -->
     <main class="hero" id="main-landing">
       <div class="hero__inner">
         <div class="hero__copy">
-          <h1 class="display">Understand the air.<br>Plan smarter.<br><span class="display__accent">Breathe better.</span></h1>
-          <p class="hero__sub">HazeGuard AI turns local air-quality data into one simple answer: <strong>is today's air okay for what you want to do?</strong> Check your area, explore the haze map, and let BreatheBuddy explain the rest.</p>
+          <h1 class="display">
+            <span class="display__line" style="--i:0"><span>Understand the air.</span></span>
+            <span class="display__line" style="--i:1"><span>Plan smarter.</span></span>
+            <span class="display__line" style="--i:2"><span>Breathe better.</span></span>
+          </h1>
+          <p class="hero__sub">Check the air where you are, explore it on a map, and get a clear answer for your plans.</p>
           <div class="hero__cta">
             <a href="#register" data-go="register" class="btn btn--primary btn--lg">Create free account <svg class="icon" aria-hidden="true"><use href="#i-arrow-right"/></svg></a>
             <a href="#login" data-go="login" class="btn btn--ghost btn--lg">Sign in</a>
           </div>
-          <p class="hero__trust"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-shield"/></svg> Free open data · No ads · Built mobile-first</p>
+          <ul class="hero__trust" aria-label="What to expect">
+            <li><svg class="icon icon--sm" aria-hidden="true"><use href="#i-check"/></svg> Free open data</li>
+            <li><svg class="icon icon--sm" aria-hidden="true"><use href="#i-check"/></svg> No ads</li>
+            <li><svg class="icon icon--sm" aria-hidden="true"><use href="#i-check"/></svg> Built mobile-first</li>
+          </ul>
         </div>
 
-        <!-- Mechanism proof: the AQI instrument. This is the pre-paint state as
-             well as the no-JS state: no place is named and no number is shown
-             until the server answers, because a hardcoded city is how a Johor
-             Bahru visitor gets told "Kuala Lumpur" first. -->
-        <figure class="instrument card liquid-glass-strong" aria-labelledby="instrument-caption">
+        <!-- Pre-paint and no-JS state: no place is named and no number is shown until
+             the server answers, because a hardcoded city is how a Johor Bahru visitor
+             gets told "Kuala Lumpur" first. -->
+        <figure class="instrument instrument--dock" aria-labelledby="instrument-caption">
           <figcaption class="instrument__head" id="instrument-caption">
             <span class="instrument__place"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-location-pin"/></svg> <span data-aqi-place>—</span></span>
             <span class="badge badge--loading" data-aqi-badge>Checking…</span>
@@ -122,14 +143,14 @@
               <span class="instrument__label" data-aqi-label>US AQI · waiting for a reading</span>
             </span>
           </div>
+          <div class="instrument__split">
+            <div class="instrument__stat"><span class="instrument__stat-val"><span data-aqi-pm25>—</span> <small>µg/m³</small></span><span class="instrument__stat-label">PM2.5</span></div>
+            <div class="instrument__stat"><span class="instrument__stat-val"><span data-aqi-pm10>—</span> <small>µg/m³</small></span><span class="instrument__stat-label">PM10</span></div>
+          </div>
           <div class="aqi-band" data-aqi-band role="img" aria-label="Air quality index not yet available">
             <div class="aqi-band__track"><span class="aqi-band__seg aqi-band__seg--1"></span><span class="aqi-band__seg aqi-band__seg--2"></span><span class="aqi-band__seg aqi-band__seg--3"></span><span class="aqi-band__seg aqi-band__seg--4"></span><span class="aqi-band__seg aqi-band__seg--5"></span></div>
             <span class="aqi-band__marker" data-aqi-marker style="--pos:0%; display:none"></span>
             <div class="aqi-band__labels" aria-hidden="true"><span style="left:0%">0</span><span style="left:16.67%">50</span><span style="left:33.33%">100</span><span style="left:50%">150</span><span style="left:66.67%">200</span><span style="left:100%">300</span></div>
-          </div>
-          <div class="instrument__split">
-            <div class="instrument__stat"><span class="instrument__stat-val"><span data-aqi-pm25>—</span> <small>µg/m³</small></span><span class="instrument__stat-label">PM2.5</span></div>
-            <div class="instrument__stat"><span class="instrument__stat-val"><span data-aqi-pm10>—</span> <small>µg/m³</small></span><span class="instrument__stat-label">PM10</span></div>
           </div>
           <p class="instrument__foot" data-aqi-src>Waiting for your location and the current reading.</p>
           <noscript><p class="instrument__foot">JavaScript is disabled, so no reading can be fetched. Nothing above is a measurement.</p></noscript>
@@ -137,87 +158,113 @@
       </div>
     </main>
 
-    <section class="section" id="features" aria-labelledby="features-title">
+    <!-- The whole idea in one sentence. landing.js lights it word by word as it scrolls. -->
+    <section class="statement" id="story" aria-label="What HazeGuard AI does">
       <div class="section__inner">
-        <p class="eyebrow">Features</p>
-        <h2 id="features-title">What you get</h2>
-        <div class="bento">
-          <!-- Radar preview -->
-          <article class="bento__item bento__item--map card liquid-glass">
-            <div class="mini-map" aria-hidden="true">
-              <span class="mini-map__grid"></span>
-              <span class="pin pin--good" style="--x:22%;--y:34%"><i></i>48</span>
-              <span class="pin pin--mod" style="--x:58%;--y:24%"><i></i>72</span>
-              <span class="pin pin--usg" style="--x:74%;--y:62%"><i></i>118</span>
-              <span class="pin pin--good" style="--x:34%;--y:70%"><i></i>55</span>
-              <span class="mini-map__me"></span>
+        <p class="statement__text" data-words>HazeGuard AI turns local air-quality data into one simple answer: is today’s air okay for what you want to do?</p>
+      </div>
+    </section>
+
+    <!-- Features: four tiles. Each names the feature, then says what it does for you. -->
+    <section class="section section--alt" id="features" aria-labelledby="features-title">
+      <div class="section__inner">
+        <header class="section__head" data-in>
+          <h2 id="features-title">A map, a planner, and an assistant.</h2>
+          <p>All three answer from the same air-quality data.</p>
+        </header>
+
+        <div class="features">
+          <article class="feature feature--radar" data-in>
+            <div class="feature__copy">
+              <p class="feature__label"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-map"/></svg> Haze Radar</p>
+              <h3>See the haze before you head out.</h3>
+              <p class="feature__text">Explore air quality around any neighbourhood on an interactive map. Search a place, drop your pin, and compare areas before you commit to a route.</p>
+              <p class="feature__note">Live readings on a Leaflet map, sampled around wherever you point it.</p>
             </div>
-            <div class="bento__body">
-              <h3><svg class="icon" aria-hidden="true"><use href="#i-map"/></svg> Haze Radar</h3>
-              <p>Explore air quality around any neighbourhood on an interactive map: search a place, drop your pin, and compare areas before you commit to a route.</p>
-              <p class="bento__note">Live readings on an interactive Leaflet map, sampled around wherever you point it.</p>
+            <div class="feature__visual">
+              <div class="mini-map" aria-hidden="true">
+                <span class="pin pin--good" style="--x:22%;--y:30%;--k:0"><i></i>48</span>
+                <span class="pin pin--mod" style="--x:62%;--y:20%;--k:1"><i></i>72</span>
+                <span class="pin pin--usg" style="--x:80%;--y:62%;--k:2"><i></i>118</span>
+                <span class="pin pin--good" style="--x:30%;--y:74%;--k:3"><i></i>55</span>
+                <span class="mini-map__me"></span>
+              </div>
             </div>
           </article>
-          <!-- Planner preview -->
-          <article class="bento__item card liquid-glass">
-            <div class="bento__body">
-              <h3><svg class="icon" aria-hidden="true"><use href="#i-planner"/></svg> AI Activity Planner</h3>
-              <p>Tell it what you want to do, where and when. You get a plain-language verdict with the reasoning, plus an indoor fallback for bad-air days.</p>
+
+          <article class="feature feature--planner feature--dark" data-in style="--i:1">
+            <div class="feature__copy">
+              <p class="feature__label"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-planner"/></svg> AI Activity Planner</p>
+              <h3>Get a yes or no for your plan.</h3>
+              <p class="feature__text">Tell it what you want to do, where and when. You get a plain-language verdict with the reasoning, plus an indoor fallback for bad-air days.</p>
+              <p class="feature__note"><span class="badge badge--demo">Demo recommendation</span></p>
+            </div>
+            <div class="feature__visual feature__visual--pad">
               <div class="mini-verdict">
                 <span class="ribbon ribbon--good">Good window · AQI 64</span>
+                <div class="mini-hours" aria-hidden="true">
+                  <i style="--h:64%;--c:var(--aqi-2);--k:0"></i><i style="--h:71%;--c:var(--aqi-2);--k:1"></i><i style="--h:78%;--c:var(--aqi-2);--k:2"></i><i style="--h:84%;--c:var(--aqi-2);--k:3"></i><i style="--h:87%;--c:var(--aqi-2);--k:4"></i><i style="--h:89%;--c:var(--aqi-2);--k:5"></i><i style="--h:85%;--c:var(--aqi-2);--k:6"></i><i style="--h:80%;--c:var(--aqi-2);--k:7"></i><i style="--h:71%;--c:var(--aqi-2);--k:8"></i><i class="is-pick" style="--h:58%;--c:var(--aqi-1);--k:9"></i><i style="--h:53%;--c:var(--aqi-1);--k:10"></i><i style="--h:49%;--c:var(--aqi-1);--k:11"></i><i style="--h:45%;--c:var(--aqi-1);--k:12"></i>
+                </div>
+                <div class="mini-hours__axis" aria-hidden="true"><span>9 AM</span><span>3 PM</span><span>9 PM</span></div>
                 <span class="mini-verdict__text">“Evening run at 6 PM is reasonable, with particulate levels easing after sunset.”</span>
               </div>
-              <p class="bento__note"><span class="badge badge--demo">Demo recommendation</span></p>
             </div>
           </article>
-          <!-- BreatheBuddy preview -->
-          <article class="bento__item card liquid-glass">
-            <div class="bento__body">
-              <h3><svg class="icon" aria-hidden="true"><use href="#i-chat"/></svg> BreatheBuddy AI</h3>
-              <p>Ask anything about the air in your own words. BreatheBuddy answers from real air-quality tool calls, and says so when data is missing.</p>
+
+          <article class="feature feature--chat feature--green" data-in>
+            <div class="feature__copy">
+              <p class="feature__label"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-chat"/></svg> BreatheBuddy AI</p>
+              <h3>Ask about the air in your own words.</h3>
+              <p class="feature__text">BreatheBuddy answers from real air-quality tool calls, and says so when data is missing.</p>
+              <p class="feature__note"><span class="badge badge--demo">Demo conversation</span></p>
+            </div>
+            <div class="feature__visual feature__visual--pad">
               <div class="mini-chat" aria-hidden="true">
-                <span class="mini-chat__bubble mini-chat__bubble--them">Is today okay for my evening run?</span>
-                <span class="mini-chat__bubble mini-chat__bubble--me">AQI 72 (moderate) at 6 PM: fine for most people. Avoid main roads at rush hour.</span>
+                <span class="mini-chat__bubble mini-chat__bubble--me">Is today okay for my evening run?</span>
+                <div class="mini-chat__reply">
+                  <span class="mini-chat__typing"><i></i><i></i><i></i></span>
+                  <span class="mini-chat__bubble mini-chat__bubble--them">AQI 72 (moderate) at 6 PM: fine for most people. Avoid main roads at rush hour.</span>
+                </div>
               </div>
-              <p class="bento__note"><span class="badge badge--demo">Demo conversation</span></p>
             </div>
           </article>
-          <!-- Honest data strip -->
-          <article class="bento__item bento__item--wide card liquid-glass">
-            <div class="bento__body bento__body--row">
-              <div>
-                <h3><svg class="icon" aria-hidden="true"><use href="#i-air"/></svg> Honest data, clearly labelled</h3>
-                <p>Model-based estimates are always marked as estimates and kept separate from official station measurements. Every reading shows its source, units and timestamp. When data is missing, we say missing, never zero.</p>
-              </div>
-              <ul class="legend-inline" aria-label="Air quality categories">
-                <li><i class="dot dot--1"></i>Good</li>
-                <li><i class="dot dot--2"></i>Moderate</li>
-                <li><i class="dot dot--3"></i>Unhealthy (sensitive)</li>
-                <li><i class="dot dot--4"></i>Unhealthy</li>
-                <li><i class="dot dot--5"></i>Very unhealthy</li>
-              </ul>
+
+          <article class="feature feature--honest" data-in style="--i:1">
+            <div class="feature__copy">
+              <p class="feature__label"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-air"/></svg> Honest data</p>
+              <h3>Estimates are labelled as estimates.</h3>
+              <p class="feature__text">Model-based estimates are always marked as estimates and kept separate from official station measurements. Every reading shows its source, units and timestamp. When data is missing, we say missing, never zero.</p>
             </div>
+            <ul class="legend-inline" aria-label="Air quality categories">
+              <li><i class="dot dot--1"></i><span>Good</span><small>0–50</small></li>
+              <li><i class="dot dot--2"></i><span>Moderate</span><small>51–100</small></li>
+              <li><i class="dot dot--3"></i><span>Unhealthy for sensitive groups</span><small>101–150</small></li>
+              <li><i class="dot dot--4"></i><span>Unhealthy</span><small>151–200</small></li>
+              <li><i class="dot dot--5"></i><span>Very unhealthy</span><small>201+</small></li>
+            </ul>
           </article>
         </div>
       </div>
     </section>
 
-    <section class="section section--alt" id="how" aria-labelledby="how-title">
+    <!-- How it works: this one really is a sequence, so the numbers stay. -->
+    <section class="section" id="how" aria-labelledby="how-title">
       <div class="section__inner">
-        <p class="eyebrow">Get started</p>
-        <h2 id="how-title">How it works</h2>
+        <header class="section__head" data-in>
+          <h2 id="how-title">From a location to a decision in three steps.</h2>
+        </header>
         <ol class="steps">
-          <li class="steps__item liquid-glass">
+          <li class="steps__item" data-in>
             <span class="steps__num" aria-hidden="true">1</span>
             <h3>Check your air</h3>
             <p>Tap “Use my location” and see AQI, PM2.5 and PM10 for where you are, with source and timestamp attached.</p>
           </li>
-          <li class="steps__item liquid-glass">
+          <li class="steps__item" data-in style="--i:1">
             <span class="steps__num" aria-hidden="true">2</span>
             <h3>See it on the map</h3>
             <p>Open Haze Radar to compare areas, find cleaner routes and inspect individual readings.</p>
           </li>
-          <li class="steps__item liquid-glass">
+          <li class="steps__item" data-in style="--i:2">
             <span class="steps__num" aria-hidden="true">3</span>
             <h3>Plan with AI</h3>
             <p>Ask BreatheBuddy or generate an activity plan. Recommendations cite the data they used, never invented readings.</p>
@@ -226,16 +273,10 @@
       </div>
     </section>
 
-    <section class="section cta-band" aria-labelledby="cta-title">
-      <div class="cta__aurora" aria-hidden="true">
-        <span class="aurora__blob aurora__blob--1"></span>
-        <span class="aurora__blob aurora__blob--2"></span>
-      </div>
-      <div class="section__inner cta-band__inner liquid-glass-strong">
-        <div>
-          <h2 id="cta-title">Ready to check your air?</h2>
-          <p>Create an account to save plans and preferences, or sign in to continue.</p>
-        </div>
+    <section class="cta-band" aria-labelledby="cta-title">
+      <div class="section__inner cta-band__inner" data-in>
+        <h2 id="cta-title">Ready to check your air?</h2>
+        <p>Create an account to save plans and preferences, or sign in to continue.</p>
         <div class="cta-band__actions">
           <a href="#register" data-go="register" class="btn btn--primary btn--lg">Create free account</a>
           <a href="#login" data-go="login" class="btn btn--ghost btn--lg">Sign in</a>
@@ -568,7 +609,7 @@
           <header class="page-head">
             <div>
               <h1 class="page-head__greeting"><span data-user-daypart>Welcome back</span>, <span data-user-name>—</span></h1>
-              <p class="page-head__sub">Saturday, 11 October 2026 · <span data-aqi-place>—</span></p>
+              <p class="page-head__sub"><span data-today>Saturday, 11 October 2026</span> · <span data-aqi-place>—</span></p>
             </div>
             <div class="page-head__actions">
               <button type="button" class="icon-btn" data-nav="profile" aria-label="Open profile"><svg class="icon" aria-hidden="true"><use href="#i-user"/></svg></button>
@@ -1101,6 +1142,7 @@
        global scope, and radar.js wires its search box to helpers app.js owns
        (runPlaceSearch, placeSearch), which are only defined once app.js has run. -->
   <script src="<?= $base ?>/media/com_hazeguard/js/app.js"></script>
+  <script src="<?= $base ?>/media/com_hazeguard/js/landing.js"></script>
   <script src="<?= $base ?>/media/com_hazeguard/js/radar.js"></script>
 </body>
 </html>
