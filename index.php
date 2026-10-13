@@ -18,6 +18,7 @@ require __DIR__ . '/bootstrap.php';
 use HazeGuard\Component\Hazeguard\Site\Controller\AirController;
 use HazeGuard\Component\Hazeguard\Site\Controller\AuthController;
 use HazeGuard\Component\Hazeguard\Site\Controller\PlacesController;
+use HazeGuard\Component\Hazeguard\Site\Controller\PlanController;
 use HazeGuard\Component\Hazeguard\Site\Controller\ProfileController;
 use HazeGuard\Csrf;
 use HazeGuard\Request;
@@ -111,9 +112,24 @@ $routes = [
     // two air-quality providers already in front of them.
     'GET /api/places/search'  => [PlacesController::class, 'search'],
     'GET /api/places/reverse' => [PlacesController::class, 'reverse'],
+
+    // The planner's saved plans. Every one of these resolves the account from
+    // the session; DELETE reads a plan id from the path but the model puts it in
+    // the WHERE clause beside the user id, so a guessed id matches no row.
+    'GET /api/plans'       => [PlanController::class, 'index'],
+    'POST /api/plans'      => [PlanController::class, 'create'],
+    'DELETE /api/plans/:id' => [PlanController::class, 'delete'],
 ];
 
 $key = $method . ' ' . $path;
+if (!isset($routes[$key])) {
+    // One route carries a path parameter: DELETE /api/plans/{id}. It is matched
+    // separately rather than through a general pattern, so the route table stays
+    // a literal lookup and nothing else can ever be captured by accident.
+    if ($method === 'DELETE' && preg_match('#^/api/plans/(\d+)$#', $path) === 1) {
+        $key = 'DELETE /api/plans/:id';
+    }
+}
 if (!isset($routes[$key])) {
     Response::error('not_found', 'No such endpoint.', 404);
 }

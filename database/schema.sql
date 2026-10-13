@@ -150,3 +150,32 @@ CREATE TABLE IF NOT EXISTS user_preferences (
   PRIMARY KEY (user_id),
   CONSTRAINT fk_prefs_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------- activity_plans ---
+-- The planner screen's saved plans, one row each, owned by the account that
+-- saved it. `activity` is free text on purpose (the planner lets someone type
+-- their own activity), so it is capped rather than allow-listed; `intensity`
+-- travels with it because that is what the AQI threshold was derived from.
+--
+-- `hours_offset` is the hours from *now* that the activity starts, kept beside
+-- the resolved `starts_at` so a listing prints a real date without recomputing
+-- the offset from a wall clock that has moved on. `verdict_aqi` records the
+-- reading the verdict was judged against, so a saved plan does not silently
+-- re-judge itself against later air.
+CREATE TABLE IF NOT EXISTS activity_plans (
+  id           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  user_id      BIGINT UNSIGNED NOT NULL,
+  activity     VARCHAR(60)     NOT NULL,
+  intensity    ENUM('light','moderate','intense') NOT NULL DEFAULT 'moderate',
+  place_name   VARCHAR(120)    NOT NULL,
+  place_lat    DECIMAL(10,6)   NULL DEFAULT NULL,
+  place_lon    DECIMAL(10,6)   NULL DEFAULT NULL,
+  hours_offset SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+  starts_at    DATETIME        NOT NULL,
+  verdict_aqi  SMALLINT UNSIGNED NOT NULL,
+  prefs        VARCHAR(191)    NOT NULL DEFAULT '',
+  created_at   DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_plans_user_starts (user_id, starts_at),
+  CONSTRAINT fk_plans_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

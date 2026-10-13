@@ -140,6 +140,15 @@
     reverseGeocode: (lat, lon) =>
       api(`/api/places/reverse?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}`),
 
+    /* ---- the planner's saved plans. Every call resolves the account from the
+       session cookie, so there is no user id in any of them — the only id is the
+       plan's own, and the server matches it beside the session's user. */
+    listPlans: () => api('/api/plans'),
+
+    createPlan: (plan) => api('/api/plans', { method: 'POST', body: plan }),
+
+    deletePlan: (id) => api('/api/plans/' + encodeURIComponent(id), { method: 'DELETE', body: {} }),
+
     get csrfToken() { return csrfToken; },
   };
 })();

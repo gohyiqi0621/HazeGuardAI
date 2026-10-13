@@ -39,6 +39,102 @@ function parseHash() {
   return cut === -1 ? raw : raw.slice(0, cut);
 }
 
+/* --------------------------------------------------- tab indicator (liquid) --
+   One shared pill slides between the five tabs. It is always sized and positioned
+   to sit EXACTLY inside the active tab's box (same left/width as the item), so it
+   can never spill past a tab's edges. Movement is a smooth CSS transition; the
+   "droplet" character is a bounded vertical bob (translateY + scaleY only — never
+   a horizontal scale — so it stays inside the tab). ~400ms total (see pill-settle
+   / tab-pop / push-in in style.css).
+
+   The pill is a sibling of the items, absolutely positioned, so moving it never
+   disturbs layout. It reads --pill-x / --pill-w from the measured item rect. */
+
+let tabPill = null;
+let tabIndex = -1;      // index of the currently indicated tab
+const TAB_ORDER = ['dashboard', 'radar', 'planner', 'chat', 'profile'];
+
+function tabItems() {
+  return Array.prototype.slice.call(document.querySelectorAll('.tabbar__item'));
+}
+
+/* The offset of an item within the bar (the bar is a flex row with 6px padding,
+   and each item sits at a computed left). offsetLeft is relative to .tabbar
+   because the bar is the positioned ancestor. */
+function initTabIndicator() {
+  const bar = document.querySelector('.tabbar');
+  if (!bar) return;
+
+  tabPill = bar.querySelector('.tabbar__pill');
+  if (!tabPill) {
+    tabPill = document.createElement('span');
+    tabPill.className = 'tabbar__pill is-settled';
+    tabPill.setAttribute('aria-hidden', 'true');
+    bar.insertBefore(tabPill, bar.firstChild);
+  }
+
+  const items = tabItems();
+  const active = items.findIndex((el) => el.classList.contains('is-active'));
+  tabIndex = active === -1 ? 0 : active;
+  snapTabIndicator(items[tabIndex]);
+
+  window.addEventListener('resize', () => snapTabIndicator(tabItems()[tabIndex]), { passive: true });
+}
+
+/* Place the pill under an item with NO transition (first paint, resize) so it
+   never slides in from zero width on load or snaps on a resize. */
+function snapTabIndicator(item) {
+  if (!tabPill || !item) return;
+  tabPill.classList.add('is-snap');
+  tabPill.classList.remove('is-settling');
+  tabPill.style.setProperty('--pill-x', item.offsetLeft + 'px');
+  tabPill.style.setProperty('--pill-w', item.offsetWidth + 'px');
+  tabPill.style.setProperty('--stretch', '0px');
+  tabPill.style.setProperty('--squash', '0px');
+  void tabPill.offsetWidth; // commit the no-transition placement
+  tabPill.classList.remove('is-snap');
+}
+
+/* Slide the pill to the new tab. It is sized to the destination item exactly
+   (same left + width), so it is always clipped to the tab's box — never wider,
+   never spilling past its edges. The "droplet" feel is a bounded vertical bob
+   (pill-settle) that plays on every move; the horizontal slide is the CSS
+   transition on left/width. */
+function moveTabIndicator(fromItem, toItem) {
+  if (!tabPill || !toItem) return;
+
+  tabPill.style.setProperty('--pill-x', toItem.offsetLeft + 'px');
+  tabPill.style.setProperty('--pill-w', toItem.offsetWidth + 'px');
+  tabPill.style.setProperty('--stretch', '0px');
+  tabPill.style.setProperty('--squash', '0px');
+
+  // Bounded vertical settle (replay the keyframe cleanly each switch).
+  tabPill.classList.remove('is-settling');
+  void tabPill.offsetWidth;
+  tabPill.classList.add('is-settling');
+  tabPill.addEventListener('animationend', () => tabPill.classList.remove('is-settling'), { once: true });
+}
+
+/* The new tab's icon dips then springs back. */
+function popTabIcon(item) {
+  if (!item) return;
+  item.classList.remove('is-pop');
+  void item.offsetWidth;
+  item.classList.add('is-pop');
+  item.addEventListener('animationend', () => item.classList.remove('is-pop'), { once: true });
+}
+
+/* Push the incoming screen a few px from the direction travelled, then fade in. */
+function nudgeContent(direction, name) {
+  const el = document.getElementById('screen-' + name);
+  if (!el) return;
+  el.classList.remove('is-pushing');
+  el.style.setProperty('--push-dir', String(direction || 1));
+  void el.offsetWidth;
+  el.classList.add('is-pushing');
+  el.addEventListener('animationend', () => el.classList.remove('is-pushing'), { once: true });
+}
+
 function render(name) {
   // Guard on the whole hash, not just the screen name. The two differ for an
   // old "#reset?token=…" link, and re-rendering on that difference is what turns
@@ -66,6 +162,24 @@ function render(name) {
     if (active) btn.setAttribute('aria-current', 'page');
     else btn.removeAttribute('aria-current');
   });
+
+  // liquid tab indicator: flow the droplet to the newly active tab, pop its
+  // icon, and push the incoming screen in from the direction travelled.
+  const items = tabItems();
+  const nextIndex = items.findIndex((el) => el.dataset.nav === name);
+  if (nextIndex !== -1) {
+    const prev = tabIndex === -1 ? null : items[tabIndex];
+    const to = items[nextIndex];
+    if (prev && prev !== to) {
+      const direction = to.offsetLeft < prev.offsetLeft ? -1 : 1;
+      moveTabIndicator(prev, to);
+      popTabIcon(to);
+      nudgeContent(direction, name);
+    } else if (!prev) {
+      snapTabIndicator(to);
+    }
+    tabIndex = nextIndex;
+  }
 
   document.title = info.title;
   currentScreen = name;
@@ -95,6 +209,13 @@ function render(name) {
 function onEnterScreen(name) {
   if (name === 'profile' && currentUser) {
     loadPreferences();
+  }
+  // The planner's saved plans come from MySQL, and a direct load of #planner
+  // reaches here before the session is known — so this re-runs from the session
+  // boot too, once there is an account to ask about. loadPlans() is safe to call
+  // twice: the second call simply re-reads.
+  if (name === 'planner' && currentUser && !planState.plansLoaded) {
+    loadPlans();
   }
   // The radar builds its map on entry, not at page load: Leaflet measures its
   // container, and a screen that is still `hidden` has no size.
@@ -1299,50 +1420,485 @@ function locateOnRadar() {
   if (window.HazeRadar) window.HazeRadar.locateOnRadar();
 }
 
-/* ---------------------------------------------------------------- planner - */
-let planCounter = 0;
-$('#form-planner').addEventListener('submit', (e) => {
-  e.preventDefault();
-  const activity = $('#plan-activity').value;
-  const locationName = $('#plan-location').value;
-  const time = $('#plan-time').value;
-  const prefs = $$('input[name="pref"]:checked').length;
+/* ---------------------------------------------------------------- planner --
+   Simplified live planner. Instead of a form + submit, every control change
+   re-evaluates the verdict immediately, so the user sees a result without an
+   extra "generate" step. The demo model is unchanged (PLACES + aqiCategory):
+   only the interaction is new. */
 
-  $('#plan-result').hidden = true;
-  $('#plan-loading').hidden = false;
-  $('#btn-generate').disabled = true;
+let planState = {
+  activity: 'Running',
+  place: 'Kuala Lumpur',
+  dayOffset: 0,
+  hour: 18,
+  // Free-text activities the user added this session: { name, intensity }.
+  custom: [],
+  // Intensity of the activity currently being defined in the add row.
+  customIntensity: 'moderate',
+  // The AQI of the verdict currently on screen — what a saved plan records as
+  // the reading it was judged against.
+  verdictAqi: null,
+  // The account's saved plans, as the server returned them. The screen's copy,
+  // not a second source of truth: every write re-reads through saveThenReload().
+  plans: [],
+  plansLoaded: false,
+  saving: false,
+};
 
-  setTimeout(() => {
-    const place = PLACES[locationName.toLowerCase()];
-    const hour = parseInt(time.slice(0, 2), 10);
-    const evening = hour >= 17 || hour < 7;
-    const aqi = Math.max(place.aqi - (evening ? 8 : 0), 5);
-    const cat = aqiCategory(aqi);
-    planCounter += 1;
+/* The demo places carry coordinates in PLACES; the planner sends them with a
+   saved plan so a listing can name a point, not just a city. */
+const PLACE_COORDS = {
+  'kuala lumpur':  { lat: 3.1390,  lon: 101.6869 },
+  'petaling jaya': { lat: 3.1073,  lon: 101.6067 },
+  'shah alam':     { lat: 3.0733,  lon: 101.5185 },
+  'putrajaya':     { lat: 2.9264,  lon: 101.6964 },
+  'klang':         { lat: 3.0449,  lon: 101.4455 },
+};
 
-    $('#plan-ribbon').className = 'ribbon ' + cat.ribbon;
-    $('#plan-ribbon').textContent = `${aqi <= 100 ? 'Good window' : 'Adjust your plan'} · AQI ${aqi}`;
-    $('#plan-summary').textContent =
-      `A ${time} ${activity.toLowerCase()} session in ${locationName} is ${aqi <= 100 ? 'reasonable' : 'not ideal'} in this demo scenario.`;
-    $('#plan-why').textContent =
-      `The illustrative AQI for your time and place sits at ${aqi} (${cat.label}, US AQI)${aqi > 100 ? ' — above 100, where sensitive groups should cut back' : ' — below the 100 threshold where sensitive groups should cut back'}. ` +
-      `${evening ? 'Particulate levels ease after sunset in the demo pattern.' : 'Afternoon values are typically higher in the demo pattern.'} ` +
-      `Data used: US AQI ${aqi}, PM2.5 ${Math.round(aqi * 0.53)} µg/m³ · ${prefs} preference${prefs === 1 ? '' : 's'} applied · illustrative timestamp 11 Oct 2026, 10:40 +08:00 · planned source Open-Meteo (modelled estimate).`;
-    $('#plan-alt').textContent = aqi > 100
-      ? 'Move it indoors: a covered court, gym session or mall walk keeps your training going without the particulate load.'
-      : 'If AQI climbs above 100 by then, switch to a covered stadium session or a 45-minute indoor workout.';
+/* How hard an activity is decides the AQI threshold for a "good" verdict:
+   light effort tolerates dirtier air than intense effort. Built-in activities
+   map to these; a custom activity carries the intensity the user picked. */
+const INTENSITY = {
+  light:    { label: 'Light',    threshold: 150 },
+  moderate: { label: 'Moderate', threshold: 100 },
+  intense:  { label: 'Intense',  threshold: 75  },
+};
 
-    $('#plan-loading').hidden = true;
-    $('#btn-generate').disabled = false;
-    $('#plan-result').hidden = false;
-    $('#plan-result').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }, 900);
-});
+/* The built-in activities and their intensity. */
+const BUILTIN_ACTIVITY_INTENSITY = {
+  Running: 'intense', Cycling: 'intense', Football: 'intense', Hiking: 'intense',
+  Walking: 'light', Picnic: 'light',
+};
 
-$('#btn-save-plan').addEventListener('click', () => {
-  toast(`Plan #${planCounter} saved in this session only — MySQL persistence arrives in Stage 5.`, 'warn');
-});
-$('#btn-regenerate').addEventListener('click', () => $('#form-planner').requestSubmit());
+/* The intensity of the currently selected activity (built-in or custom). */
+function activityIntensity(activity) {
+  const custom = planState.custom.find((a) => a.name === activity);
+  if (custom) return custom.intensity;
+  return BUILTIN_ACTIVITY_INTENSITY[activity] || 'moderate';
+}
+
+/* The verdict for one (activity, place, hour). Pure: no DOM writes, so it can
+   be reused for the day strip's tinting and the "best window" hint. */
+function evaluateSlot(activity, place, hour) {
+  const p = PLACES[place.toLowerCase()] || PLACES['kuala lumpur'];
+  const evening = hour >= 17 || hour < 7;
+  const aqi = Math.max(p.aqi - (evening ? 8 : 0), 5);
+  const cat = aqiCategory(aqi);
+  const threshold = INTENSITY[activityIntensity(activity)].threshold;
+  return { aqi, cat, threshold, good: aqi <= threshold };
+}
+
+/* The cleanest hour of the day for this activity (demo model). */
+function bestHour(activity, place) {
+  let best = 6, bestAqi = Infinity;
+  for (let h = 5; h <= 21; h++) {
+    const { aqi } = evaluateSlot(activity, place, h);
+    if (aqi < bestAqi) { bestAqi = aqi; best = h; }
+  }
+  return { hour: best, aqi: bestAqi };
+}
+
+function hourLabel(h) {
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h12}${h < 12 ? 'AM' : 'PM'}`;
+}
+
+function dayLabel(offset) {
+  if (offset === 0) return 'Today';
+  const d = new Date(2026, 9, 11 + offset); // demo timeline anchored at 11 Oct 2026
+  return d.toLocaleDateString('en', { weekday: 'short' });
+}
+
+/* Map an aqiCategory() ribbon class to the 1-based AQI band index used by the
+   --aqi-N tokens (ribbon--good is band 1). */
+function bandIndex(cat) {
+  const k = cat.ribbon.replace('ribbon--', '');
+  return k === 'good' ? '1' : k;
+}
+
+/* Paint the hour scroller: one segment per hour, bar height + colour by band. */
+function renderHours() {
+  const wrap = $('#plan-hours');
+  if (!wrap) return;
+  const { activity, place } = planState;
+  const max = 150; // bar scale, so every hour is comparable
+  let html = '';
+  for (let h = 0; h < 24; h++) {
+    const { aqi, cat } = evaluateSlot(activity, place, h);
+    const pct = Math.round(Math.min(aqi, max) / max * 100);
+    const bandVar = 'var(--aqi-' + bandIndex(cat) + ')';
+    html += `<button type="button" class="hours__hour${h === planState.hour ? ' is-active' : ''}" role="option"`
+      + ` aria-selected="${h === planState.hour}" data-hour="${h}"`
+      + ` aria-label="${hourLabel(h)}, AQI ${aqi}">`
+      + `<span class="hours__time">${hourLabel(h)}</span>`
+      + `<span class="hours__bar"><i style="height:${pct}%;--band:${bandVar}"></i></span>`
+      + `</button>`;
+  }
+  wrap.innerHTML = html;
+}
+
+/* Paint the day strip labels from the demo timeline. */
+function renderDays() {
+  $$('#plan-daystrip [data-dayoffset]').forEach((btn) => {
+    const off = Number(btn.dataset.dayoffset);
+    const d = new Date(2026, 9, 11 + off);
+    const num = btn.querySelector('[data-day-num]');
+    const dow = btn.querySelector('.daystrip__dow');
+    if (num) num.textContent = String(d.getDate());
+    if (dow && off > 0) dow.textContent = d.toLocaleDateString('en', { weekday: 'short' });
+  });
+}
+
+/* Write the verdict into the DOM. Called on every control change. */
+function renderVerdict() {
+  const { activity, place, hour, dayOffset } = planState;
+  const { aqi, cat, good } = evaluateSlot(activity, place, hour);
+  const when = `${dayOffset === 0 ? 'Today' : dayLabel(dayOffset)}, ${hourLabel(hour)}`;
+  planState.verdictAqi = aqi;
+
+  $('#plan-activity').value = activity;
+  $('#plan-location').value = place;
+  $('#plan-when-echo').textContent = when;
+  $('#plan-hour').value = String(hour);
+
+  const bandIdx = bandIndex(cat);
+  const meter = $('#plan-meter');
+  meter.style.setProperty('--band', `var(--aqi-${bandIdx})`);
+  meter.style.setProperty('--band-ink', `var(--aqi-${bandIdx}-ink)`);
+  $('#plan-aqi').textContent = String(aqi);
+
+  $('#plan-headline').textContent = good
+    ? `${when}: good for ${activity.toLowerCase()}`
+    : `${when}: not ideal for ${activity.toLowerCase()}`;
+  $('#plan-summary').textContent = good
+    ? `AQI ${aqi} (${cat.label}) is at or below the level where sensitive groups should ease off.`
+    : `AQI ${aqi} (${cat.label}) is above the level where sensitive groups should cut back.`;
+
+  // "Why" + indoor alternative (kept honest and source-labelled).
+  $('#plan-why').textContent =
+    `The illustrative ${place} reading sits at ${aqi} (${cat.label}, US AQI) for this hour. `
+    + `${hour >= 17 || hour < 7 ? 'Particulate levels ease after sunset in the demo pattern.' : 'Afternoon values are typically higher in the demo pattern.'} `;
+  $('#plan-alt').textContent = good
+    ? 'If AQI climbs above your threshold by then, switch to a covered stadium session or a 45-minute indoor workout.'
+    : 'Move it indoors: a covered court, gym session or mall walk keeps you training without the particulate load.';
+
+  // Best window of the day.
+  const best = bestHour(activity, place);
+  const bestBox = $('#plan-best');
+  if (hour === best.hour) {
+    bestBox.hidden = true;
+  } else {
+    bestBox.hidden = false;
+    $('#plan-best-text').textContent = `Cleanest hour today: ${hourLabel(best.hour)} (AQI ${best.aqi})`;
+    $('#btn-best-apply').dataset.hour = String(best.hour);
+  }
+}
+
+/* One place to move the selected hour, from either the scroller or the slider. */
+function setPlanHour(h) {
+  planState.hour = Math.max(0, Math.min(23, Number(h)));
+  $$('#plan-hours .hours__hour').forEach((b) => {
+    const on = Number(b.dataset.hour) === planState.hour;
+    b.classList.toggle('is-active', on);
+    b.setAttribute('aria-selected', String(on));
+  });
+  renderVerdict();
+}
+
+/* Render the free-text activities the user added this session as tiles, just
+   before the "Custom" add tile. Removes stale ones first so re-adding is safe. */
+function renderCustomTiles() {
+  const group = $('#plan-activity-group');
+  if (!group) return;
+  group.querySelectorAll('.pick__item--custom').forEach((el) => el.remove());
+  const addBtn = $('#btn-add-activity');
+  planState.custom.forEach((a) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'pick__item pick__item--custom';
+    btn.dataset.activity = a.name;
+    btn.setAttribute('role', 'radio');
+    btn.setAttribute('aria-checked', 'false');
+    btn.innerHTML = '<svg class="icon" aria-hidden="true"><use href="#i-sparkle"/></svg><span></span>';
+    btn.querySelector('span').textContent = a.name;
+    group.insertBefore(btn, addBtn);
+  });
+}
+
+function setPlanActivity(activity) {
+  planState.activity = activity;
+  $$('#plan-activity-group .pick__item').forEach((b) => {
+    if (b.dataset.activity === undefined) return;
+    const on = b.dataset.activity === activity;
+    b.classList.toggle('is-active', on);
+    b.setAttribute('aria-checked', String(on));
+  });
+  renderHours();
+  renderVerdict();
+}
+
+/* Show/hide the inline free-text row, and keep the add tile's state in sync. */
+function toggleCustomRow(show) {
+  const row = $('#plan-custom-row');
+  const addBtn = $('#btn-add-activity');
+  if (!row) return;
+  const next = show === undefined ? row.hidden : show;
+  row.hidden = !next;
+  addBtn.setAttribute('aria-expanded', String(next));
+  if (next) $('#plan-custom-input').focus();
+}
+
+/* Intensity toggle inside the add row. */
+function setPlanIntensity(intensity) {
+  planState.customIntensity = intensity;
+  $$('#plan-custom-row .intensity').forEach((b) => {
+    const on = b.dataset.intensity === intensity;
+    b.classList.toggle('is-active', on);
+    b.setAttribute('aria-checked', String(on));
+  });
+}
+
+/* Commit the typed activity: add it as a tile, select it, close the row. */
+function addCustomActivity() {
+  const input = $('#plan-custom-input');
+  const name = input.value.trim();
+  if (!name) { input.focus(); return; }
+  // Match an existing built-in by name (case-insensitive) instead of duplicating.
+  const builtin = Object.keys(BUILTIN_ACTIVITY_INTENSITY)
+    .find((k) => k.toLowerCase() === name.toLowerCase());
+  const label = builtin || name;
+
+  if (!builtin && !planState.custom.some((a) => a.name.toLowerCase() === name.toLowerCase())) {
+    planState.custom.push({ name: label, intensity: planState.customIntensity });
+  }
+  renderCustomTiles();
+  setPlanActivity(label);
+  input.value = '';
+  toggleCustomRow(false);
+  toast(`Added “${label}” (${INTENSITY[activityIntensity(label)].label} effort).`, 'ok');
+}
+
+function setPlanPlace(place) {
+  planState.place = place;
+  $$('#plan-location-group .pick__item').forEach((b) => {
+    const on = b.dataset.place === place;
+    b.classList.toggle('is-active', on);
+    b.setAttribute('aria-checked', String(on));
+  });
+  renderHours();
+  renderVerdict();
+}
+
+function setPlanDay(offset) {
+  planState.dayOffset = offset;
+  $$('#plan-daystrip .daystrip__day').forEach((b) => {
+    const on = Number(b.dataset.dayoffset) === offset;
+    b.classList.toggle('is-active', on);
+    b.setAttribute('aria-selected', String(on));
+  });
+  renderVerdict();
+}
+
+/* The chosen preference slugs from the collapsed block, in the order offered. */
+function chosenPrefs() {
+  return $$('#form-planner input[name="pref"]:checked').map((b) => b.value);
+}
+
+/* "Sat 12 Oct, 6 PM" — a saved plan's date, from the server's UTC timestamp. */
+function planDateLabel(plan) {
+  const d = new Date(String(plan.starts_at).replace(' ', 'T') + 'Z');
+  if (Number.isNaN(d.getTime())) return '—';
+  const day = d.toLocaleDateString('en', { weekday: 'short', day: 'numeric', month: 'short' });
+  const h = d.getUTCHours();
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${day}, ${h12}${h < 12 ? 'AM' : 'PM'}`;
+}
+
+/* Paint the account's saved plans. Each row is a real row in MySQL; removing one
+   deletes it there, not just here. */
+function renderPlans() {
+  const list = $('#plan-saved-list');
+  const wrap = $('#plan-saved');
+  if (!list || !wrap) return;
+
+  wrap.hidden = planState.plans.length === 0;
+  $('#plan-saved-count').textContent = planState.plans.length
+    ? `${planState.plans.length} saved`
+    : '';
+
+  list.innerHTML = '';
+  planState.plans.forEach((plan) => {
+    const li = document.createElement('li');
+    li.className = 'savedplan';
+    li.dataset.planId = String(plan.id);
+
+    const bandVar = 'var(--aqi-' + bandIndex(aqiCategory(plan.verdict_aqi)) + ')';
+
+    li.innerHTML =
+      '<span class="savedplan__meter" aria-hidden="true"></span>'
+      + '<span class="savedplan__body">'
+      + '<span class="savedplan__title"></span>'
+      + '<span class="savedplan__when"></span>'
+      + '</span>'
+      + '<button type="button" class="savedplan__del" aria-label="Remove this saved plan">'
+      + '<svg class="icon icon--sm" aria-hidden="true"><use href="#i-x"/></svg></button>';
+
+    li.querySelector('.savedplan__meter').style.setProperty('--band', bandVar);
+    li.querySelector('.savedplan__meter').textContent = String(plan.verdict_aqi);
+    // textContent, never innerHTML: the activity is free text the user typed.
+    li.querySelector('.savedplan__title').textContent = `${plan.activity} · ${plan.place}`;
+    li.querySelector('.savedplan__when').textContent =
+      `${planDateLabel(plan)} · ${INTENSITY[plan.intensity] ? INTENSITY[plan.intensity].label : plan.intensity} effort`;
+
+    list.appendChild(li);
+  });
+}
+
+/* Read the account's saved plans. Silent when signed out: the planner is still
+   usable, the list simply stays empty until there is an account to hold them. */
+async function loadPlans() {
+  if (!currentUser) { planState.plans = []; planState.plansLoaded = true; renderPlans(); return; }
+  try {
+    const data = await HazeAPI.listPlans();
+    planState.plans = Array.isArray(data.plans) ? data.plans : [];
+    planState.plansLoaded = true;
+    renderPlans();
+  } catch (err) {
+    // A failed read must not blank a list that is merely stale: only report it.
+    if (err && err.status === 401) { planState.plans = []; renderPlans(); return; }
+    toast('Could not load your saved plans.', 'warn');
+  }
+}
+
+/* Save the verdict currently on screen, then re-read so the list is the server's
+   answer rather than an optimistic guess. */
+async function savePlan() {
+  if (planState.saving) return;
+
+  if (!currentUser) {
+    toast('Sign in to save this plan.', 'warn');
+    navigate('login');
+    return;
+  }
+
+  const { activity, place, hour, dayOffset, verdictAqi } = planState;
+  const coords = PLACE_COORDS[place.toLowerCase()] || {};
+
+  const button = $('#btn-save-plan');
+  planState.saving = true;
+  button.disabled = true;
+  button.classList.add('is-busy');
+
+  try {
+    await HazeAPI.createPlan({
+      activity,
+      intensity: activityIntensity(activity),
+      place_name: place,
+      place_lat: coords.lat ?? null,
+      place_lon: coords.lon ?? null,
+      hour,
+      day_offset: dayOffset,
+      verdict_aqi: verdictAqi ?? 0,
+      prefs: chosenPrefs(),
+    });
+    await loadPlans();
+    toast(`Saved ${hourLabel(hour)} ${activity.toLowerCase()} in ${place}.`, 'ok');
+    $('#plan-saved')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  } catch (err) {
+    // The server's own wording carries the reason (limit reached, too many
+    // saves); a bare "something went wrong" would hide all of them.
+    toast((err && err.message) || 'Could not save that plan.', 'warn');
+  } finally {
+    planState.saving = false;
+    button.disabled = false;
+    button.classList.remove('is-busy');
+  }
+}
+
+/* Delete one saved plan by id. */
+async function deletePlan(id) {
+  const row = $('#plan-saved-list .savedplan[data-plan-id="' + id + '"]');
+  if (row) row.classList.add('is-removing');
+  try {
+    await HazeAPI.deletePlan(id);
+    await loadPlans();
+    toast('Plan removed.', 'ok');
+  } catch (err) {
+    if (row) row.classList.remove('is-removing');
+    toast((err && err.message) || 'Could not remove that plan.', 'warn');
+  }
+}
+
+/* Wire the simplified planner once. */
+function initPlanner() {
+  if (!$('#form-planner')) return;
+  renderDays();
+  renderHours();
+  renderVerdict();
+  loadPlans();
+
+  $('#form-planner').addEventListener('submit', (e) => e.preventDefault());
+
+  $('#plan-activity-group').addEventListener('click', (e) => {
+    const addBtn = e.target.closest('#btn-add-activity');
+    if (addBtn) { toggleCustomRow($('#plan-custom-row').hidden); return; }
+    const btn = e.target.closest('.pick__item');
+    if (btn) setPlanActivity(btn.dataset.activity);
+  });
+  $('#plan-location-group').addEventListener('click', (e) => {
+    const btn = e.target.closest('.pick__item');
+    if (btn) setPlanPlace(btn.dataset.place);
+  });
+  $('#plan-daystrip').addEventListener('click', (e) => {
+    const btn = e.target.closest('.daystrip__day');
+    if (btn) setPlanDay(Number(btn.dataset.dayoffset));
+  });
+  $('#plan-hours').addEventListener('click', (e) => {
+    const btn = e.target.closest('.hours__hour');
+    if (btn) setPlanHour(Number(btn.dataset.hour));
+  });
+  $('#plan-hour').addEventListener('input', (e) => setPlanHour(e.target.value));
+  $('#btn-best-apply').addEventListener('click', (e) => {
+    setPlanHour(Number(e.currentTarget.dataset.hour));
+    $('#plan-hours .hours__hour.is-active')?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+  });
+
+  $('#btn-save-plan').addEventListener('click', savePlan);
+
+  // Saved plans: one delegated handler, so rows added later need no re-binding.
+  $('#plan-saved-list').addEventListener('click', (e) => {
+    const del = e.target.closest('.savedplan__del');
+    if (!del) return;
+    const row = del.closest('.savedplan');
+    if (row) deletePlan(Number(row.dataset.planId));
+  });
+
+  $('#btn-regenerate').addEventListener('click', () => {
+    renderHours();
+    renderVerdict();
+    $('#plan-result').animate
+      ? $('#plan-result').animate([{ opacity: 0.55 }, { opacity: 1 }], { duration: 260, easing: 'ease-out' })
+      : null;
+  });
+
+  // "Use my location" — reuse the profile's shared detection if present.
+  $('#btn-plan-locate').addEventListener('click', () => {
+    toast('Using your saved location if set; otherwise Kuala Lumpur in this demo.', 'warn');
+  });
+
+  // Free-text activity: reveal the inline row, pick intensity, add it.
+  $('#plan-custom-row').addEventListener('click', (e) => {
+    const btn = e.target.closest('.intensity');
+    if (btn) setPlanIntensity(btn.dataset.intensity);
+  });
+  $('#btn-custom-add').addEventListener('click', addCustomActivity);
+  $('#plan-custom-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); addCustomActivity(); }
+    if (e.key === 'Escape') { toggleCustomRow(false); }
+  });
+}
+
+initPlanner();
 
 /* ------------------------------------------------------------------- chat - */
 const chatBody = $('#chat-body');
@@ -1581,6 +2137,9 @@ window.addEventListener('resize', () => {
 const initialScreen = parseHash();
 render(SCREENS[initialScreen] ? initialScreen : 'landing');
 
+// The liquid pill lives inside .tabbar; build + position it once the DOM is up.
+initTabIndicator();
+
 /* --------------------------------------------------------- session boot -- */
 // Ask the server who we are (and pick up the CSRF token), then enforce the
 // protected-route guard. If the API is unreachable we treat the visitor as
@@ -1593,6 +2152,9 @@ render(SCREENS[initialScreen] ? initialScreen : 'landing');
     currentUser = null;
   }
   sessionReady = true;
+  // Signing in changes *whose* plans the planner should show, so the list is
+  // re-read whenever the session begins. Signed out it simply stays empty.
+  planState.plansLoaded = false; planState.plans = [];
   // `render()` already ran for the initial screen, before we knew who this was,
   // so paint the identity now that the answer is in.
   renderUser(currentUser);
@@ -1616,7 +2178,6 @@ render(SCREENS[initialScreen] ? initialScreen : 'landing');
   // the row just written. It cannot live in onEnterScreen() alone, because that
   // only knows about the profile screen — the card is on the dashboard.
   //
-  // Signed out this returns immediately: there is no row to write, and
-  // airquality.js is already reading the device coordinates (rule 3).
+  // Signed out this returns immediately.
   await syncLocationFromDevice();
 })();

@@ -802,82 +802,169 @@
           </article>
         </section>
 
-        <!-- ---------------- Planner ---------------- -->
+        <!-- ---------------- Planner ----------------
+             Simplified to a three-tap flow: pick what, pick when, see the verdict
+             live. The verdict updates on every change, so there is no separate
+             "generate" step to reach a result; the old multi-field form and the
+             submit button are gone. Detail (why + provenance) is collapsed behind
+             a <details> so the default view stays calm. -->
         <section class="screen screen--app" id="screen-planner" hidden>
           <header class="page-head">
             <div>
-              <h1 class="page-head__greeting">AI Activity Planner</h1>
-              <p class="page-head__sub">Tell us your plan and get a clear yes-or-no with the reasons</p>
+              <h1 class="page-head__greeting">Plan an activity</h1>
+              <p class="page-head__sub">Pick what and when — the verdict updates as you go</p>
             </div>
           </header>
 
-          <form class="card liquid-glass form-card" id="form-planner" novalidate>
-            <div class="form-grid">
-              <div class="field">
-                <label for="plan-activity">Activity</label>
-                <select class="input" id="plan-activity" required>
-                  <option value="Running">Running / jogging</option>
-                  <option value="Cycling">Cycling</option>
-                  <option value="Football">Outdoor football</option>
-                  <option value="Hiking">Hiking</option>
-                  <option value="Walking">Walking / commute</option>
-                  <option value="Picnic">Picnic with family</option>
-                </select>
+          <form class="planner" id="form-planner" novalidate>
+            <!-- 1. What -->
+            <section class="planner__block">
+              <h2 class="planner__label">What are you doing?</h2>
+              <div class="pick" role="radiogroup" aria-label="Choose an activity" id="plan-activity-group">
+                <button type="button" class="pick__item is-active" data-activity="Running" role="radio" aria-checked="true">
+                  <svg class="icon" aria-hidden="true"><use href="#i-planner"/></svg><span>Run</span>
+                </button>
+                <button type="button" class="pick__item" data-activity="Cycling" role="radio" aria-checked="false">
+                  <svg class="icon" aria-hidden="true"><use href="#i-radar"/></svg><span>Cycle</span>
+                </button>
+                <button type="button" class="pick__item" data-activity="Football" role="radio" aria-checked="false">
+                  <svg class="icon" aria-hidden="true"><use href="#i-shield"/></svg><span>Football</span>
+                </button>
+                <button type="button" class="pick__item" data-activity="Hiking" role="radio" aria-checked="false">
+                  <svg class="icon" aria-hidden="true"><use href="#i-map"/></svg><span>Hike</span>
+                </button>
+                <button type="button" class="pick__item" data-activity="Walking" role="radio" aria-checked="false">
+                  <svg class="icon" aria-hidden="true"><use href="#i-locate"/></svg><span>Walk</span>
+                </button>
+                <button type="button" class="pick__item" data-activity="Picnic" role="radio" aria-checked="false">
+                  <svg class="icon" aria-hidden="true"><use href="#i-air"/></svg><span>Picnic</span>
+                </button>
+                <!-- Free text: add your own activity. Selecting this reveals an
+                     inline input; the added activity then behaves as a normal
+                     tile (with its intensity driving the threshold). -->
+                <button type="button" class="pick__item pick__item--add" id="btn-add-activity" aria-haspopup="true" aria-expanded="false" aria-controls="plan-custom-row">
+                  <svg class="icon" aria-hidden="true"><use href="#i-sliders"/></svg><span>Custom</span>
+                </button>
               </div>
-              <div class="field">
-                <label for="plan-location">Location</label>
-                <select class="input" id="plan-location" required>
-                  <option>Kuala Lumpur</option>
-                  <option>Petaling Jaya</option>
-                  <option>Shah Alam</option>
-                  <option>Putrajaya</option>
-                  <option>Klang</option>
-                </select>
+              <input type="hidden" id="plan-activity" name="activity" value="Running">
+
+              <!-- Inline free-text add row, shown when "Custom" is tapped. -->
+              <div class="custom-row" id="plan-custom-row" hidden>
+                <div class="custom-row__field">
+                  <label class="visually-hidden" for="plan-custom-input">Your activity</label>
+                  <input class="input" type="text" id="plan-custom-input" placeholder="e.g. Yoga, skateboarding…" maxlength="40" autocomplete="off">
+                </div>
+                <div class="custom-row__intensity" role="radiogroup" aria-label="How intense is it?">
+                  <button type="button" class="intensity" data-intensity="light" role="radio" aria-checked="false"><span class="intensity__dot"></span>Light</button>
+                  <button type="button" class="intensity is-active" data-intensity="moderate" role="radio" aria-checked="true"><span class="intensity__dot"></span>Moderate</button>
+                  <button type="button" class="intensity" data-intensity="intense" role="radio" aria-checked="false"><span class="intensity__dot"></span>Intense</button>
+                </div>
+                <button type="button" class="btn btn--primary btn--sm" id="btn-custom-add">Add</button>
               </div>
-              <div class="field">
-                <label for="plan-date">Date</label>
-                <input class="input" type="date" id="plan-date" value="2026-10-11" required>
+            </section>
+
+            <!-- 2. When — a day strip and an hour scroller. Changing either
+                 re-evaluates the verdict live; no submit needed. -->
+            <section class="planner__block">
+              <div class="planner__block-head">
+                <h2 class="planner__label">When?</h2>
+                <span class="planner__when-echo" id="plan-when-echo" aria-live="polite">Today, 6 PM</span>
               </div>
-              <div class="field">
-                <label for="plan-time">Time</label>
-                <input class="input" type="time" id="plan-time" value="18:00" required>
+              <div class="daystrip" role="tablist" aria-label="Choose a day" id="plan-daystrip">
+                <button type="button" class="daystrip__day is-active" role="tab" aria-selected="true" data-dayoffset="0"><span class="daystrip__dow">Today</span><span class="daystrip__num" data-day-num>11</span></button>
+                <button type="button" class="daystrip__day" role="tab" aria-selected="false" data-dayoffset="1"><span class="daystrip__dow">Sun</span><span class="daystrip__num" data-day-num>12</span></button>
+                <button type="button" class="daystrip__day" role="tab" aria-selected="false" data-dayoffset="2"><span class="daystrip__dow">Mon</span><span class="daystrip__num" data-day-num>13</span></button>
+                <button type="button" class="daystrip__day" role="tab" aria-selected="false" data-dayoffset="3"><span class="daystrip__dow">Tue</span><span class="daystrip__num" data-day-num>14</span></button>
+                <button type="button" class="daystrip__day" role="tab" aria-selected="false" data-dayoffset="4"><span class="daystrip__dow">Wed</span><span class="daystrip__num" data-day-num>15</span></button>
               </div>
-            </div>
-            <fieldset class="field">
-              <legend>Preferences</legend>
+              <input class="visually-hidden" type="date" id="plan-date" name="date" value="2026-10-11">
+
+              <div class="hours" id="plan-hours" role="listbox" aria-label="Choose an hour">
+                <!-- hour buttons built in JS from the day's series -->
+              </div>
+              <input class="visually-hidden" type="range" id="plan-hour" min="0" max="23" step="1" value="18"
+                     aria-label="Hour of day" aria-valuetext="6 PM">
+            </section>
+
+            <!-- 3. Where -->
+            <section class="planner__block">
+              <div class="planner__block-head">
+                <h2 class="planner__label">Where?</h2>
+                <button type="button" class="planner__locate" id="btn-plan-locate">
+                  <svg class="icon icon--sm" aria-hidden="true"><use href="#i-locate"/></svg> Use my location
+                </button>
+              </div>
+              <div class="pick pick--loc" role="radiogroup" aria-label="Choose a location" id="plan-location-group">
+                <button type="button" class="pick__item is-active" data-place="Kuala Lumpur" role="radio" aria-checked="true"><span>Kuala Lumpur</span></button>
+                <button type="button" class="pick__item" data-place="Petaling Jaya" role="radio" aria-checked="false"><span>Petaling Jaya</span></button>
+                <button type="button" class="pick__item" data-place="Shah Alam" role="radio" aria-checked="false"><span>Shah Alam</span></button>
+                <button type="button" class="pick__item" data-place="Putrajaya" role="radio" aria-checked="false"><span>Putrajaya</span></button>
+                <button type="button" class="pick__item" data-place="Klang" role="radio" aria-checked="false"><span>Klang</span></button>
+              </div>
+              <input type="hidden" id="plan-location" name="location" value="Kuala Lumpur">
+            </section>
+
+            <!-- Preferences: optional, collapsed so the first screen stays short. -->
+            <details class="planner__more">
+              <summary><svg class="icon icon--sm" aria-hidden="true"><use href="#i-sliders"/></svg> Preferences <span class="planner__more-hint">optional</span></summary>
               <div class="chips">
                 <label class="chip"><input type="checkbox" name="pref" value="lower-aqi" checked><span>Prefer lower AQI windows</span></label>
                 <label class="chip"><input type="checkbox" name="pref" value="shade"><span>Avoid direct sun</span></label>
                 <label class="chip"><input type="checkbox" name="pref" value="nearby" checked><span>Stay within 5 km</span></label>
                 <label class="chip"><input type="checkbox" name="pref" value="short"><span>Keep it under 60 min</span></label>
               </div>
-            </fieldset>
-            <button class="btn btn--primary btn--block" type="submit" id="btn-generate">Generate plan</button>
-            <p class="form-card__note"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-info"/></svg> Demo generation: the real AI + live data pipeline arrives in Stages 4–5.</p>
+            </details>
           </form>
 
-          <div class="plan-loading" id="plan-loading" hidden>
-            <span class="spinner" aria-hidden="true"></span>
-            <p>Checking air quality for your plan…</p>
-          </div>
-
-          <article class="card liquid-glass plan-result" id="plan-result" hidden>
-            <div class="plan-result__head">
-              <h2>Your plan</h2>
+          <!-- Verdict — updates live, so no loading state is ever shown for a
+               change the user just made. -->
+          <article class="verdict" id="plan-result" aria-live="polite">
+            <div class="verdict__head">
+              <h2>Your verdict</h2>
               <span class="badge badge--demo">Demo recommendation</span>
             </div>
-            <span class="ribbon ribbon--good" id="plan-ribbon">Good window · AQI 64</span>
-            <p class="plan-result__summary" id="plan-summary">A 6 PM run in Kuala Lumpur is reasonable in this demo scenario.</p>
-            <h3 class="plan-result__sub">Why</h3>
-            <p class="plan-result__why" id="plan-why">The illustrative AQI for your time and place sits at 64 (Moderate, US AQI), below the 100 threshold where sensitive groups should cut back. Particulate levels ease after sunset in the demo pattern. Data used: US AQI 64, PM2.5 34 µg/m³ · illustrative timestamp 11 Oct 2026, 10:40 +08:00 · planned source Open-Meteo (modelled estimate).</p>
-            <h3 class="plan-result__sub">Indoor alternative</h3>
-            <p class="plan-result__alt" id="plan-alt">If AQI climbs above 100, switch to a covered stadium session or a 45-minute indoor workout; the air-quality cost of staying out isn’t worth it.</p>
-            <div class="plan-result__actions">
-              <button type="button" class="btn btn--primary" id="btn-save-plan">Save plan</button>
-              <button type="button" class="btn btn--ghost" id="btn-regenerate">Regenerate</button>
+            <div class="verdict__row">
+              <div class="verdict__meter" id="plan-meter">
+                <span class="verdict__aqi" id="plan-aqi">—</span>
+                <span class="verdict__unit">AQI</span>
+              </div>
+              <div class="verdict__body">
+                <p class="verdict__headline" id="plan-headline">Pick a time to see your verdict</p>
+                <p class="verdict__sub" id="plan-summary">The reading for your activity, place and hour appears here as you choose.</p>
+              </div>
             </div>
-            <p class="src-line">Forecast-free: this verdict uses the demo reading for the selected time, not a guaranteed future value. Future air quality is never promised.</p>
+            <div class="verdict__best" id="plan-best" hidden>
+              <svg class="icon icon--sm" aria-hidden="true"><use href="#i-sparkle"/></svg>
+              <span id="plan-best-text"></span>
+              <button type="button" class="verdict__best-apply" id="btn-best-apply">Use this</button>
+            </div>
+            <details class="verdict__why">
+              <summary>Why this verdict</summary>
+              <p id="plan-why">—</p>
+              <h3>Indoor alternative</h3>
+              <p id="plan-alt">—</p>
+              <p class="src-line" id="plan-src">Demo data · illustrative timestamp 11 Oct 2026, 10:40 +08:00 · planned source: Open-Meteo (modelled estimate, not a station measurement).</p>
+            </details>
+            <div class="verdict__actions">
+              <button type="button" class="btn btn--primary" id="btn-save-plan">Save plan</button>
+              <button type="button" class="btn btn--ghost" id="btn-regenerate">
+                <svg class="icon icon--sm" aria-hidden="true"><use href="#i-refresh"/></svg> Refresh
+              </button>
+            </div>
           </article>
+
+          <!-- Saved plans — real rows in the activity_plans table, read back on
+               every visit. Hidden until the account has at least one, so a first
+               visit shows nothing it cannot honour. -->
+          <section class="planner__block planner__block--saved" id="plan-saved" aria-labelledby="plan-saved-head" hidden>
+            <div class="planner__block-head">
+              <h2 class="planner__label" id="plan-saved-head">Saved plans</h2>
+              <span class="planner__when-echo" id="plan-saved-count"></span>
+            </div>
+            <ul class="savedplans" id="plan-saved-list" aria-live="polite">
+              <!-- rows built in JS from GET /api/plans -->
+            </ul>
+          </section>
         </section>
 
         <!-- ---------------- Chat ---------------- -->
@@ -1112,6 +1199,7 @@
 
       <!-- Mobile bottom navigation (exactly five items) -->
       <nav class="tabbar liquid-glass-strong" aria-label="Primary">
+        <span class="tabbar__pill is-settled" aria-hidden="true"></span>
         <button type="button" class="tabbar__item is-active" data-nav="dashboard" aria-current="page">
           <svg class="icon" aria-hidden="true"><use href="#i-home"/></svg><span>Home</span>
         </button>
